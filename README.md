@@ -118,30 +118,3 @@ The question asks the agent to find the value of \(r\) that satisfies the logari
   ```
 
   You can view the sample exported trajectory here: [Trajectory](./src/reactxen/resources/sample_traj_math_problem.json)
-
-
-## Publications
-
-Here is a list of research papers publications (**under review**). If you use or reference this work, please cite it as follows:
-
-1. **Text Based ReAct: IoT Agent in Action**  
-   
-   ```bibtex
-   @article{jamesdcpreactxen,
-     title={ReActXen: A Framework for Iterative Task Solving via ReAct, Review, Reflect, and Self-Ask},
-     author={James Rayfield, Dhaval Patel},
-     journal={In Reivew : KDD 2025 Data Science Track},
-     year={2025},
-     url={https://authorworkbench.apps.res.ibm.com/work/preview/17954}
-   }
-
-2. **Code Based ReAct: WO Agent in Action**  
-   
-   ```bibtex
-   @article{joedcpreactxen,
-     title={Enhancing Industrial Work Order Management with an LLM-Agentic Code ReAct Framework},
-     author={Nianjun Zhou, Dhaval Patel},
-     journal={In Reivew : KDD 2025 Data Science Track},
-     year={2025},
-     url={https://authorworkbench.apps.res.ibm.com/work/preview/18044}
-   }

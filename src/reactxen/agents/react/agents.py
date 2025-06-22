@@ -535,6 +535,7 @@ class ReactAgent:
                 },
             ]
             json_trajectory["history"] = history
+
             # print (self.scratchpad)
             if (
                 self.actionstyle == ActionStyle.BLOCK_FUNCTION
@@ -592,18 +593,21 @@ class ReactAgent:
                     except:
                         pass
                 else:
-                    new_entry["thought"] = get_part(thoughts[j])
-                    new_entry["action"] = (
-                        "Tool Name: "
-                        + get_part(actions[j * 2])
-                        + " , Tool Parameter: "
-                        + get_part(actions[j * 2 + 1])
-                        + ""
-                    )
-                    if j != total_round - 1:
-                        new_entry["observation"] = get_part(observations[j])
-                    else:
-                        new_entry["observation"] = ""
+                    try:
+                        new_entry["thought"] = get_part(thoughts[j])
+                        new_entry["action"] = (
+                            "Tool Name: "
+                            + get_part(actions[j * 2])
+                            + " , Tool Parameter: "
+                            + get_part(actions[j * 2 + 1])
+                            + ""
+                        )
+                        if j != total_round - 1:
+                            new_entry["observation"] = get_part(observations[j])
+                        else:
+                            new_entry["observation"] = ""
+                    except:
+                        pass
                 trajectory.append(new_entry)
 
             # print (json_trajectory)
@@ -626,7 +630,8 @@ class ReactAgent:
             json_trajectory["info"] = info
             json_trajectory["final_answer"] = self.answer
             return json_trajectory
-        except:
+        except Exception as ex:
+            #print (ex)
             return {}
 
     def print_final_answer(self):

@@ -364,8 +364,8 @@ class ReactAgent:
         enable_question_assement=False,
         enable_agent_ask=False,
         max_execution_time=-1,
+        skip_token_counting=False,
     ) -> None:
-
         self.question = question
         self.answer = ""
         self.key = key
@@ -389,6 +389,7 @@ class ReactAgent:
         self.enable_question_assement = enable_question_assement
         self.enable_agent_ask = enable_agent_ask
         self.max_execution_time = max_execution_time
+        self.skip_token_counting = skip_token_counting
 
         # tool invocation
         if self.use_tool_cache:
@@ -412,7 +413,10 @@ class ReactAgent:
 
         self.react_llm_model_id = react_llm_model_id
         self.llm = llm
-        self.enc = count_tokens
+        if self.skip_token_counting:
+            self.enc = partial(count_tokens, skip_token_counting=True)
+        else:
+            self.enc = count_tokens
         self.context_length = get_context_length(react_llm_model_id)
         self.actionstyle = actionstyle
         self.parent_agent = None
@@ -1734,6 +1738,7 @@ class ReactReflectAgent(ReactAgent):
         enable_question_assement=False,
         enable_agent_ask=False,
         max_execution_time=-1,
+        skip_token_counting=False,
     ) -> None:
 
         super().__init__(
@@ -1762,6 +1767,7 @@ class ReactReflectAgent(ReactAgent):
             enable_question_assement=enable_question_assement,
             enable_agent_ask=enable_agent_ask,
             max_execution_time=max_execution_time,
+            skip_token_counting=skip_token_counting,
         )
         self.reflect_llm = reflect_llm
         self.reflect_prompt = reflect_prompt

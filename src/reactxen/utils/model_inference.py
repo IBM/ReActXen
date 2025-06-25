@@ -415,7 +415,7 @@ def gpt_usage(backend="bam"):
     }
 
 
-def count_tokens(input_text, model_id=None, upper_limit=10000000):
+def count_tokens(input_text, model_id=None, upper_limit=10000000, skip_token_counting=False):
     """
     Counts the number of tokens in the given input based on the specified model.
 
@@ -426,6 +426,11 @@ def count_tokens(input_text, model_id=None, upper_limit=10000000):
     Returns:
         int: The count of tokens in the input text.
     """
+
+    # avoid counting the token
+    if skip_token_counting:
+        return 1
+
     if isinstance(model_id, str) and model_id in modelset:
         selected_model = model_id
     else:

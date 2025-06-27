@@ -3,7 +3,7 @@ name = "reactxen"
 version = "0.0.7"
 authors = ["James, Nianjun, Dhaval"]
 description = "ReAct eXtended"
-readme = "readme.md"
+readme = "README.md"
 homepage = "https://github.ibm.com/GenAIApps/ReActXen.git"
 repository = "https://github.ibm.com/GenAIApps/ReActXen.git"
 

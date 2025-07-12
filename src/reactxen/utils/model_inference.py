@@ -459,7 +459,7 @@ def watsonx_count_tokens(text, model_id="mistralai/mistral-large", upper_limit=1
         model_id=model_id,
         credentials=credentials,
         project_id=os.environ["WATSONX_PROJECT_ID"],
-        max_retries=5,
+        max_retries=2,
         delay_time=2,
         retry_status_codes=[502, 503],
         #persistent_connection=False,    # this did not work with tokenize
@@ -484,6 +484,8 @@ def watsonx_count_tokens(text, model_id="mistralai/mistral-large", upper_limit=1
             # print("Extracted token count:", token_count)
         else:
             total_count = upper_limit + 10
+    except Exception as ex:
+        pass
     #print ('ended -----------')
     return total_count
 

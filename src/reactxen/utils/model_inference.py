@@ -240,7 +240,8 @@ def watsonx_llm_chat(
         project_id=project_id,
         max_retries=5,
         delay_time=2,
-        retry_status_codes=[502, 503]
+        retry_status_codes=[502, 503],
+        persistent_connection=False,
     )
 
     messages = get_chat_message(messages, is_system_prompt, replace_system_by_assistant)
@@ -460,7 +461,8 @@ def watsonx_count_tokens(text, model_id="mistralai/mistral-large", upper_limit=1
         project_id=os.environ["WATSONX_PROJECT_ID"],
         max_retries=5,
         delay_time=2,
-        retry_status_codes=[502, 503]
+        retry_status_codes=[502, 503],
+        persistent_connection=False,
     )
 
     if len(text) > MAX_TEXT_LENGTH_TO_TOKENIZER:

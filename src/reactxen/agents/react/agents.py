@@ -2044,16 +2044,18 @@ class ReactReflectAgent(ReactAgent):
         )
 
     def count_questions(self, text):
-        # Split the text into lines
-        lines = text.splitlines()
 
         # Initialize the counter
         count = 0
 
-        # Iterate over each line and check if it starts with "Question"
-        for line in lines:
-            if line.strip().startswith("Question"):
-                count += 1
+        if text and len(text) > 0:
+            # Split the text into lines
+            lines = text.splitlines()
+
+            # Iterate over each line and check if it starts with "Question"
+            for line in lines:
+                if line.strip().startswith("Question"):
+                    count += 1
 
         return count
 

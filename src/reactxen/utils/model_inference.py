@@ -462,7 +462,7 @@ def watsonx_count_tokens(text, model_id="mistralai/mistral-large", upper_limit=1
         max_retries=5,
         delay_time=2,
         retry_status_codes=[502, 503],
-        persistent_connection=False,
+        #persistent_connection=False,    # this did not work with tokenize
     )
 
     if len(text) > MAX_TEXT_LENGTH_TO_TOKENIZER:

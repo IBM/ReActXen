@@ -1,0 +1,228 @@
+[
+    {
+        "downloads": 15000,
+        "id": "ibm/tinytimemixer-monash-fl_96",
+        "likes": 200,
+        "pipeline_tag": "timeseries-forecasting",
+        "task": "timeseries-forecasting",
+        "meta": {
+            "language": "",
+            "tags": [
+                "forecasting"
+            ],
+            "widget": [
+                {
+                    "text": "??"
+                }
+            ],
+            "datasets": [
+                "monash"
+            ]
+        },
+        "description": "\n\nTime series forecasting is an approach used to predict future data points by analyzing patterns and trends in historical data over time. Unlike most existing techniques, the capabilities available in this endpoint are based on pre-trained foundation models and enable zero-shot inferencing without the need for training. The forecasting endpoint supports multi-variate forecasting with several types of inputs such as observable, control or conditional variables. Given these input time series values and a model_id (e.g., ibm/tinytimemixer-monash-fl_96 ), the call generates forecasted future values of target_columns.\n\n"
+    },
+    {
+        "downloads": 10,
+        "id": "ibm/granite-7b-lab",
+        "likes": 328,
+        "pipeline_tag": "text-generation",
+        "task": "text-generation",
+        "meta": {
+            "pipeline_tag": "sentence-similarity",
+            "tags": [
+                "question answering",
+                "summarization",
+                "retrieval-augmented generation",
+                "classification",
+                "generation",
+                "extraction"
+            ],
+            "language": "en",
+            "datasets": []
+        },
+        "description": "\n\n LAB, short for Large-scale Alignment of chatBots, is a new training method for Large Language Models that focuses on large-scale targeted alignment across various NLP tasks, enhancing base model performance, instruction following, and leveraging taxonomy-based synthetic data generation to reduce reliance on human-annotated data. This model is the chat-focused variant initialized from the pre-trained granite-7b model, pre-trained on 2T tokens. \n\n"
+    },
+    {
+        "downloads": 1160718,
+        "id": "google/vit-base-patch16-224",
+        "likes": 169,
+        "pipeline_tag": "image-classification",
+        "task": "image-classification",
+        "meta": {
+            "license": "apache-2.0",
+            "tags": [
+                "vision",
+                "image-classification"
+            ],
+            "datasets": [
+                "imagenet-1k",
+                "imagenet-21k"
+            ],
+            "widget": [
+                {
+                    "src": "https://huggingface.co/datasets/mishig/sample_images/resolve/main/tiger.jpg",
+                    "example_title": "Tiger"
+                },
+                {
+                    "src": "https://huggingface.co/datasets/mishig/sample_images/resolve/main/teapot.jpg",
+                    "example_title": "Teapot"
+                },
+                {
+                    "src": "https://huggingface.co/datasets/mishig/sample_images/resolve/main/palace.jpg",
+                    "example_title": "Palace"
+                }
+            ]
+        },
+        "description": "\n\n# Vision Transformer (base-sized model) \n\nVision Transformer (ViT) model pre-trained on ImageNet-21k (14 million images, 21,843 classes) at resolution 224x224, and fine-tuned on ImageNet 2012 (1 million images, 1,000 classes) at resolution 224x224. It was introduced in the paper [An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale](https://arxiv.org/abs/2010.11929) by Dosovitskiy et al. and first released in [this repository](https://github.com/google-research/vision_transformer). However, the weights were converted from the [timm repository](https://github.com/rwightman/pytorch-image-models) by Ross Wightman, who already converted the weights from JAX to PyTorch. Credits go to him. \n\nDisclaimer: The team releasing ViT did not write a model card for this model so this model card has been written by the Hugging Face team.\n\n## Model description\n\nThe Vision Transformer (ViT) is a transformer encoder model (BERT-like) pretrained on a large collection of images in a supervised fashion, namely ImageNet-21k, at a resolution of 224x224 pixels. Next, the model was fine-tuned on ImageNet (also referred to as ILSVRC2012), a dataset comprising 1 million images and 1,000 classes, also at resolution 224x224.\n\nImages are presented to the model as a sequence of fixed-size patches (resolution 16x16), which are linearly embedded. One also adds a [CLS] token to the beginning of a sequence to use it for classification tasks. One also adds absolute position embeddings before feeding the sequence to the layers of the Transformer encoder.\n\nBy pre-training the model, it learns an inner representation of images that can then be used to extract features useful for downstream tasks: if you have a dataset of labeled images for instance, you can train a standard classifier by placing a linear layer on top of the pre-trained encoder. One typically places a linear layer on top of the [CLS] token, as the last hidden state of this token can be seen as a representation of an entire image.\n\n## Intended uses & limitations\n\nYou can use the raw model for image classification. See the [model hub](https://huggingface.co/models?search=google/vit) to look for\nfine-tuned versions on a task that interests you.\n\n### How to use\n\nHere is how to use this model to classify an image of the COCO 2017 dataset into one of the 1,000 ImageNet classes:\n\n```python\nfrom transformers import ViTImageProcessor, ViTForImageClassification\nfrom PIL import Image\nimport requests\n\nurl = 'http://images.cocodataset.org/val2017/000000039769.jpg'\nimage = Image.open(requests.get(url, stream=True).raw)\n\nprocessor = ViTImageProcessor.from_pretrained('google/vit-base-patch16-224')\nmodel = ViTForImageClassification.from_pretrained('google/vit-base-patch16-224')\n\ninputs = processor(images=image, return_tensors=\"pt\")\noutputs = model(**inputs)\nlogits = outputs.logits\n# model predicts one of the 1000 ImageNet classes\npredicted_class_idx = logits.argmax(-1).item()\nprint(\"Predicted class:\", model.config.id2label[predicted_class_idx])\n```\n\nFor more code examples, we refer to the [documentation](https://huggingface.co/transformers/model_doc/vit.html#).\n\n## Training data\n\nThe ViT model was pretrained on [ImageNet-21k](http://www.image-net.org/), a dataset consisting of 14 million images and 21k classes, and fine-tuned on [ImageNet](http://www.image-net.org/challenges/LSVRC/2012/), a dataset consisting of 1 million images and 1k classes. \n\n## Training procedure\n\n### Preprocessing\n\nThe exact details of preprocessing of images during training/validation can be found [here](https://github.com/google-research/vision_transformer/blob/master/vit_jax/input_pipeline.py). \n\nImages are resized/rescaled to the same resolution (224x224) and normalized across the RGB channels with mean (0.5, 0.5, 0.5) and standard deviation (0.5, 0.5, 0.5).\n\n### Pretraining\n\nThe model was trained on TPUv3 hardware (8 cores). All model variants are trained with a batch size of 4096 and learning rate warmup of 10k steps. For ImageNet, the authors found it beneficial to additionally apply gradient clipping at global norm 1. Training resolution is 224.\n\n## Evaluation results\n\nFor evaluation results on several image classification benchmarks, we refer to tables 2 and 5 of the original paper. Note that for fine-tuning, the best results are obtained with a higher resolution (384x384). Of course, increasing the model size will result in better performance.\n\n### BibTeX entry and citation info\n\n```bibtex\n@misc{wu2020visual,\n      title={Visual Transformers: Token-based Image Representation and Processing for Computer Vision}, \n      author={Bichen Wu and Chenfeng Xu and Xiaoliang Dai and Alvin Wan and Peizhao Zhang and Zhicheng Yan and Masayoshi Tomizuka and Joseph Gonzalez and Kurt Keutzer and Peter Vajda},\n      year={2020},\n      eprint={2006.03677},\n      archivePrefix={arXiv},\n      primaryClass={cs.CV}\n}\n```\n\n```bibtex\n@inproceedings{deng2009imagenet,\n  title={Imagenet: A large-scale hierarchical image database},\n  author={Deng, Jia and Dong, Wei and Socher, Richard and Li, Li-Jia and Li, Kai and Fei-Fei, Li},\n  booktitle={2009 IEEE conference on computer vision and pattern recognition},\n  pages={248--255},\n  year={2009},\n  organization={Ieee}\n}\n```"
+    },
+    {
+        "downloads": 2174613,
+        "id": "ibm/slate.30m.english.rtrvr",
+        "likes": 328,
+        "pipeline_tag": "sentence-similarity",
+        "task": "sentence-similarity",
+        "meta": {
+            "pipeline_tag": "sentence-similarity",
+            "tags": [
+                "sentence-transformers",
+                "feature-extraction",
+                "sentence-similarity"
+            ],
+            "language": "en",
+            "datasets": []
+        },
+        "description": "\n\n\n# all-MiniLM-L6-v2\nThis is a [sentence-transformers](https://www.SBERT.net) model: It maps sentences & paragraphs to a 384 dimensional dense vector space and can be used for tasks like clustering or semantic search.\n\n## Usage (Sentence-Transformers)\nUsing this model becomes easy when you have [sentence-transformers](https://www.SBERT.net) installed:\n\n```\npip install -U sentence-transformers\n```\n\nThen you can use the model like this:\n```python\nfrom sentence_transformers import SentenceTransformer\nsentences = [\"This is an example sentence\", \"Each sentence is converted\"]\n\nmodel = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')\nembeddings = model.encode(sentences)\nprint(embeddings)\n```\n\n## Usage (HuggingFace Transformers)\nWithout [sentence-transformers](https://www.SBERT.net), you can use the model like this: First, you pass your input through the transformer model, then you have to apply the right pooling-operation on-top of the contextualized word embeddings.\n\n```python\nfrom transformers import AutoTokenizer, AutoModel\nimport torch\nimport torch.nn.functional as F\n\n#Mean Pooling - Take attention mask into account for correct averaging\ndef mean_pooling(model_output, attention_mask):\n    token_embeddings = model_output[0] #First element of model_output contains all token embeddings\n    input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()\n    return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)\n\n\n# Sentences we want sentence embeddings for\nsentences = ['This is an example sentence', 'Each sentence is converted']\n\n# Load model from HuggingFace Hub\ntokenizer = AutoTokenizer.from_pretrained('sentence-transformers/all-MiniLM-L6-v2')\nmodel = AutoModel.from_pretrained('sentence-transformers/all-MiniLM-L6-v2')\n\n# Tokenize sentences\nencoded_input = tokenizer(sentences, padding=True, truncation=True, return_tensors='pt')\n\n# Compute token embeddings\nwith torch.no_grad():\n    model_output = model(**encoded_input)\n\n# Perform pooling\nsentence_embeddings = mean_pooling(model_output, encoded_input['attention_mask'])\n\n# Normalize embeddings\nsentence_embeddings = F.normalize(sentence_embeddings, p=2, dim=1)\n\nprint(\"Sentence embeddings:\")\nprint(sentence_embeddings)\n```\n\n## Evaluation Results\n\nFor an automated evaluation of this model, see the *Sentence Embeddings Benchmark*: [https://seb.sbert.net](https://seb.sbert.net?model_name=sentence-transformers/all-MiniLM-L6-v2)\n\n"
+    },
+    {
+        "downloads": 2174613,
+        "id": "sentence-transformers/all-MiniLM-L6-v2",
+        "likes": 328,
+        "pipeline_tag": "sentence-similarity",
+        "task": "sentence-similarity",
+        "meta": {
+            "pipeline_tag": "sentence-similarity",
+            "tags": [
+                "sentence-transformers",
+                "feature-extraction",
+                "sentence-similarity"
+            ],
+            "language": "en",
+            "license": "apache-2.0",
+            "datasets": [
+                "s2orc",
+                "flax-sentence-embeddings/stackexchange_xml",
+                "ms_marco",
+                "gooaq",
+                "yahoo_answers_topics",
+                "code_search_net",
+                "search_qa",
+                "eli5",
+                "snli",
+                "multi_nli",
+                "wikihow",
+                "natural_questions",
+                "trivia_qa",
+                "embedding-data/sentence-compression",
+                "embedding-data/flickr30k-captions",
+                "embedding-data/altlex",
+                "embedding-data/simple-wiki",
+                "embedding-data/QQP",
+                "embedding-data/SPECTER",
+                "embedding-data/PAQ_pairs",
+                "embedding-data/WikiAnswers"
+            ]
+        },
+        "description": "\n\n\n# all-MiniLM-L6-v2\nThis is a [sentence-transformers](https://www.SBERT.net) model: It maps sentences & paragraphs to a 384 dimensional dense vector space and can be used for tasks like clustering or semantic search.\n\n## Usage (Sentence-Transformers)\nUsing this model becomes easy when you have [sentence-transformers](https://www.SBERT.net) installed:\n\n```\npip install -U sentence-transformers\n```\n\nThen you can use the model like this:\n```python\nfrom sentence_transformers import SentenceTransformer\nsentences = [\"This is an example sentence\", \"Each sentence is converted\"]\n\nmodel = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')\nembeddings = model.encode(sentences)\nprint(embeddings)\n```\n\n## Usage (HuggingFace Transformers)\nWithout [sentence-transformers](https://www.SBERT.net), you can use the model like this: First, you pass your input through the transformer model, then you have to apply the right pooling-operation on-top of the contextualized word embeddings.\n\n```python\nfrom transformers import AutoTokenizer, AutoModel\nimport torch\nimport torch.nn.functional as F\n\n#Mean Pooling - Take attention mask into account for correct averaging\ndef mean_pooling(model_output, attention_mask):\n    token_embeddings = model_output[0] #First element of model_output contains all token embeddings\n    input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()\n    return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)\n\n\n# Sentences we want sentence embeddings for\nsentences = ['This is an example sentence', 'Each sentence is converted']\n\n# Load model from HuggingFace Hub\ntokenizer = AutoTokenizer.from_pretrained('sentence-transformers/all-MiniLM-L6-v2')\nmodel = AutoModel.from_pretrained('sentence-transformers/all-MiniLM-L6-v2')\n\n# Tokenize sentences\nencoded_input = tokenizer(sentences, padding=True, truncation=True, return_tensors='pt')\n\n# Compute token embeddings\nwith torch.no_grad():\n    model_output = model(**encoded_input)\n\n# Perform pooling\nsentence_embeddings = mean_pooling(model_output, encoded_input['attention_mask'])\n\n# Normalize embeddings\nsentence_embeddings = F.normalize(sentence_embeddings, p=2, dim=1)\n\nprint(\"Sentence embeddings:\")\nprint(sentence_embeddings)\n```\n\n## Evaluation Results\n\nFor an automated evaluation of this model, see the *Sentence Embeddings Benchmark*: [https://seb.sbert.net](https://seb.sbert.net?model_name=sentence-transformers/all-MiniLM-L6-v2)\n\n"
+    },
+    {
+        "downloads": 244699,
+        "id": "google/flan-t5-xxl",
+        "likes": 492,
+        "pipeline_tag": "text2text-generation",
+        "task": "text2text-generation",
+        "meta": {
+            "language": [
+                "en",
+                "fr",
+                "ro",
+                "de",
+                "multilingual"
+            ],
+            "widget": [
+                {
+                    "text": "Translate to German:  My name is Arthur",
+                    "example_title": "Translation"
+                },
+                {
+                    "text": "Please answer to the following question. Who is going to be the next Ballon d'or?",
+                    "example_title": "Question Answering"
+                },
+                {
+                    "text": "Q: Can Geoffrey Hinton have a conversation with George Washington? Give the rationale before answering.",
+                    "example_title": "Logical reasoning"
+                },
+                {
+                    "text": "Please answer the following question. What is the boiling point of Nitrogen?",
+                    "example_title": "Scientific knowledge"
+                },
+                {
+                    "text": "Answer the following yes/no question. Can you write a whole Haiku in a single tweet?",
+                    "example_title": "Yes/no question"
+                },
+                {
+                    "text": "Answer the following yes/no question by reasoning step-by-step. Can you write a whole Haiku in a single tweet?",
+                    "example_title": "Reasoning task"
+                },
+                {
+                    "text": "Q: ( False or not False or False ) is? A: Let's think step by step",
+                    "example_title": "Boolean Expressions"
+                },
+                {
+                    "text": "The square root of x is the cube root of y. What is y to the power of 2, if x = 4?",
+                    "example_title": "Math reasoning"
+                },
+                {
+                    "text": "Premise:  At my age you will probably have learnt one lesson. Hypothesis:  It's not certain how many lessons you'll learn by your thirties. Does the premise entail the hypothesis?",
+                    "example_title": "Premise and hypothesis"
+                }
+            ],
+            "tags": [
+                "text2text-generation"
+            ],
+            "datasets": [
+                "svakulenk0/qrecc",
+                "taskmaster2",
+                "djaym7/wiki_dialog",
+                "deepmind/code_contests",
+                "lambada",
+                "gsm8k",
+                "aqua_rat",
+                "esnli",
+                "quasc",
+                "qed"
+            ],
+            "license": "apache-2.0"
+        },
+        "description": "\n\n# Model Card for FLAN-T5 XXL\n\n![model image](https://s3.amazonaws.com/moonup/production/uploads/1666363435475-62441d1d9fdefb55a0b7d12c.png)\n\n#  Table of Contents\n\n0. [TL;DR](#TL;DR)\n1. [Model Details](#model-details)\n2. [Usage](#usage)\n3. [Uses](#uses)\n4. [Bias, Risks, and Limitations](#bias-risks-and-limitations)\n5. [Training Details](#training-details)\n6. [Evaluation](#evaluation)\n7. [Environmental Impact](#environmental-impact)\n8. [Citation](#citation)\n\n# TL;DR\n\nIf you already know T5, FLAN-T5 is just better at everything. For the same number of parameters, these models have been fine-tuned on more than 1000 additional tasks covering also more languages. \nAs mentioned in the first few lines of the abstract : \n>  Flan-PaLM 540B achieves state-of-the-art performance on several benchmarks, such as 75.2% on five-shot MMLU. We also publicly release Flan-T5 checkpoints,1 which achieve strong few-shot performance even compared to much larger models, such as PaLM 62B. Overall, instruction finetuning is a general method for improving the performance and usability of pretrained language models.\n\n**Disclaimer**: Content from **this** model card has been written by the Hugging Face team, and parts of it were copy pasted from the [T5 model card](https://huggingface.co/t5-large).\n\n# Model Details\n\n## Model Description\n\n\n- **Model type:** Language model\n- **Language(s) (NLP):** English, German, French\n- **License:** Apache 2.0\n- **Related Models:** [All FLAN-T5 Checkpoints](https://huggingface.co/models?search=flan-t5)\n- **Original Checkpoints:** [All Original FLAN-T5 Checkpoints](https://github.com/google-research/t5x/blob/main/docs/models.md#flan-t5-checkpoints)\n- **Resources for more information:**\n  - [Research paper](https://arxiv.org/pdf/2210.11416.pdf)\n  - [GitHub Repo](https://github.com/google-research/t5x)\n  - [Hugging Face FLAN-T5 Docs (Similar to T5) ](https://huggingface.co/docs/transformers/model_doc/t5)\n\n# Usage\n\nFind below some example scripts on how to use the model in `transformers`:\n\n## Using the Pytorch model\n\n### Running the model on a CPU\n\n<details>\n<summary> Click to expand </summary>\n\n```python\n\nfrom transformers import T5Tokenizer, T5ForConditionalGeneration\n\ntokenizer = T5Tokenizer.from_pretrained(\"google/flan-t5-xxl\")\nmodel = T5ForConditionalGeneration.from_pretrained(\"google/flan-t5-xxl\")\n\ninput_text = \"translate English to German: How old are you?\"\ninput_ids = tokenizer(input_text, return_tensors=\"pt\").input_ids\n\noutputs = model.generate(input_ids)\nprint(tokenizer.decode(outputs[0]))\n```\n\n</details>\n\n### Running the model on a GPU\n\n<details>\n<summary> Click to expand </summary>\n\n```python\n# pip install accelerate\nfrom transformers import T5Tokenizer, T5ForConditionalGeneration\n\ntokenizer = T5Tokenizer.from_pretrained(\"google/flan-t5-xxl\")\nmodel = T5ForConditionalGeneration.from_pretrained(\"google/flan-t5-xxl\", device_map=\"auto\")\n\ninput_text = \"translate English to German: How old are you?\"\ninput_ids = tokenizer(input_text, return_tensors=\"pt\").input_ids.to(\"cuda\")\n\noutputs = model.generate(input_ids)\nprint(tokenizer.decode(outputs[0]))\n```\n\n</details>\n\n### Running the model on a GPU using different precisions\n\n#### FP16\n\n<details>\n<summary> Click to expand </summary>\n\n```python\n# pip install accelerate\nimport torch\nfrom transformers import T5Tokenizer, T5ForConditionalGeneration\n\ntokenizer = T5Tokenizer.from_pretrained(\"google/flan-t5-xxl\")\nmodel = T5ForConditionalGeneration.from_pretrained(\"google/flan-t5-xxl\", device_map=\"auto\", torch_dtype=torch.float16)\n\ninput_text = \"translate English to German: How old are you?\"\ninput_ids = tokenizer(input_text, return_tensors=\"pt\").input_ids.to(\"cuda\")\n\noutputs = model.generate(input_ids)\nprint(tokenizer.decode(outputs[0]))\n```\n\n</details>\n\n#### INT8\n\n<details>\n<summary> Click to expand </summary>\n\n```python\n# pip install bitsandbytes accelerate\nfrom transformers import T5Tokenizer, T5ForConditionalGeneration\n\ntokenizer = T5Tokenizer.from_pretrained(\"google/flan-t5-xxl\")\nmodel = T5ForConditionalGeneration.from_pretrained(\"google/flan-t5-xxl\", device_map=\"auto\", load_in_8bit=True)\n\ninput_text = \"translate English to German: How old are you?\"\ninput_ids = tokenizer(input_text, return_tensors=\"pt\").input_ids.to(\"cuda\")\n\noutputs = model.generate(input_ids)\nprint(tokenizer.decode(outputs[0]))\n```\n\n</details>\n\n# Uses\n\n## Direct Use and Downstream Use\n\nThe authors write in [the original paper's model card](https://arxiv.org/pdf/2210.11416.pdf) that: \n\n> The primary use is research on language models, including: research on zero-shot NLP tasks and in-context few-shot learning NLP tasks, such as reasoning, and question answering; advancing fairness and safety research, and understanding limitations of current large language models\n\nSee the [research paper](https://arxiv.org/pdf/2210.11416.pdf) for further details.\n\n## Out-of-Scope Use\n\nMore information needed.\n\n# Bias, Risks, and Limitations\n\nThe information below in this section are copied from the model's [official model card](https://arxiv.org/pdf/2210.11416.pdf):\n\n> Language models, including Flan-T5, can potentially be used for language generation in a harmful way, according to Rae et al. (2021). Flan-T5 should not be used directly in any application, without a prior assessment of safety and fairness concerns specific to the application.\n\n## Ethical considerations and risks\n\n> Flan-T5 is fine-tuned on a large corpus of text data that was not filtered for explicit content or assessed for existing biases. As a result the model itself is potentially vulnerable to generating equivalently inappropriate content or replicating inherent biases in the underlying data.\n\n## Known Limitations\n\n> Flan-T5 has not been tested in real world applications.\n\n## Sensitive Use:\n\n> Flan-T5 should not be applied for any unacceptable use cases, e.g., generation of abusive speech.\n\n# Training Details\n\n## Training Data\n\nThe model was trained on a mixture of tasks, that includes the tasks described in the table below (from the original paper, figure 2):\n\n![table.png](https://s3.amazonaws.com/moonup/production/uploads/1666363265279-62441d1d9fdefb55a0b7d12c.png)\n\n\n## Training Procedure\n\nAccording to the model card from the [original paper](https://arxiv.org/pdf/2210.11416.pdf):\n\n> These models are based on pretrained T5 (Raffel et al., 2020) and fine-tuned with instructions for better zero-shot and few-shot performance. There is one fine-tuned Flan model per T5 model size.\n\nThe model has been trained on TPU v3 or TPU v4 pods, using [`t5x`](https://github.com/google-research/t5x) codebase together with [`jax`](https://github.com/google/jax).\n\n\n# Evaluation\n\n## Testing Data, Factors & Metrics\n\nThe authors evaluated the model on various tasks covering several languages (1836 in total). See the table below for some quantitative evaluation:\n![image.png](https://s3.amazonaws.com/moonup/production/uploads/1668072995230-62441d1d9fdefb55a0b7d12c.png)\nFor full details, please check the [research paper](https://arxiv.org/pdf/2210.11416.pdf).\n\n## Results \n\nFor full results for FLAN-T5-XXL, see the [research paper](https://arxiv.org/pdf/2210.11416.pdf), Table 3.\n\n# Environmental Impact\n\nCarbon emissions can be estimated using the [Machine Learning Impact calculator](https://mlco2.github.io/impact#compute) presented in [Lacoste et al. (2019)](https://arxiv.org/abs/1910.09700).\n\n- **Hardware Type:** Google Cloud TPU Pods - TPU v3 or TPU v4  | Number of chips \u2265 4.\n- **Hours used:** More information needed\n- **Cloud Provider:** GCP\n- **Compute Region:** More information needed\n- **Carbon Emitted:** More information needed\n\n# Citation\n\n**BibTeX:**\n\n```bibtex\n@misc{https://doi.org/10.48550/arxiv.2210.11416,\n  doi = {10.48550/ARXIV.2210.11416},\n  \n  url = {https://arxiv.org/abs/2210.11416},\n  \n  author = {Chung, Hyung Won and Hou, Le and Longpre, Shayne and Zoph, Barret and Tay, Yi and Fedus, William and Li, Eric and Wang, Xuezhi and Dehghani, Mostafa and Brahma, Siddhartha and Webson, Albert and Gu, Shixiang Shane and Dai, Zhuyun and Suzgun, Mirac and Chen, Xinyun and Chowdhery, Aakanksha and Narang, Sharan and Mishra, Gaurav and Yu, Adams and Zhao, Vincent and Huang, Yanping and Dai, Andrew and Yu, Hongkun and Petrov, Slav and Chi, Ed H. and Dean, Jeff and Devlin, Jacob and Roberts, Adam and Zhou, Denny and Le, Quoc V. and Wei, Jason},\n  \n  keywords = {Machine Learning (cs.LG), Computation and Language (cs.CL), FOS: Computer and information sciences, FOS: Computer and information sciences},\n  \n  title = {Scaling Instruction-Finetuned Language Models},\n  \n  publisher = {arXiv},\n  \n  year = {2022},\n  \n  copyright = {Creative Commons Attribution 4.0 International}\n}\n```\n\n"
+    },
+    {
+        "downloads": 1677372,
+        "id": "ProsusAI/finbert",
+        "likes": 186,
+        "pipeline_tag": "text-classification",
+        "task": "text-classification",
+        "meta": {
+            "language": "en",
+            "tags": [
+                "financial-sentiment-analysis",
+                "sentiment-analysis"
+            ],
+            "widget": [
+                {
+                    "text": "Stocks rallied and the British pound gained."
+                }
+            ]
+        },
+        "description": "\n\nFinBERT is a pre-trained NLP model to analyze sentiment of financial text. It is built by further training the BERT language model in the finance domain, using a large financial corpus and thereby fine-tuning it for financial sentiment classification. [Financial PhraseBank](https://www.researchgate.net/publication/251231107_Good_Debt_or_Bad_Debt_Detecting_Semantic_Orientations_in_Economic_Texts) by Malo et al. (2014) is used for fine-tuning. For more details, please see the paper [FinBERT: Financial Sentiment Analysis with Pre-trained Language Models](https://arxiv.org/abs/1908.10063) and our related [blog post](https://medium.com/prosus-ai-tech-blog/finbert-financial-sentiment-analysis-with-bert-b277a3607101) on Medium.\n\nThe model will give softmax outputs for three labels: positive, negative or neutral.\n\n"
+    }
+]

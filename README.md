@@ -17,6 +17,7 @@ The **ReActXen** framework is built on the **Agent-Family** that has multiple he
 - [Getting Ready to use ReActXen](#getting-ready-to-use-reactxen)
 - [Hello Word ReActXen](#hello-world-reactxen)
 - [API Functions](#api-functions)
+- [Baseline Agents](#baseline-agents)
 - [Publications](#publications)
 
 ## Project Setup Instructions
@@ -118,3 +119,38 @@ The question asks the agent to find the value of \(r\) that satisfies the logari
   ```
 
   You can view the sample exported trajectory here: [Trajectory](./src/reactxen/resources/sample_traj_math_problem.json)
+
+## Baseline Agents
+
+The **ReActXen** framework includes implementations of several **baseline agent types** for comparison and experimentation. These agents serve as references and alternatives to the enhanced ReActXen agent, enabling side-by-side benchmarking and analysis.
+
+The following baseline agents are currently available in the library:
+
+- **CoT (Chain-of-Thought)**  
+  A prompting-based agent that generates intermediate reasoning steps before arriving at a final answer.
+
+- **ReAct (Original)**  
+  The classic ReAct agent that interleaves reasoning and action using environment feedback to iteratively solve tasks.
+
+- **HuggingGPT**  
+  An orchestrator-style agent that delegates tasks to various specialized tools or APIs via a language model interface.
+
+- **RAFA (Reason for Feature and Act Now)**  
+  An agent that explicitly reasons about which features are needed and when to act, aiming for more efficient decision-making.
+
+Each of these agents can be instantiated and run through the same interface as ReActXen for ease of experimentation and evaluation.
+
+> 📌 **Note:** All baseline agents are implemented within the same library and follow a shared interface for initialization, execution, and result export.
+
+### Example Usage
+
+You can select a specific agent type when initializing:
+
+```python
+agent = create_reactxen_agent(
+    question="Explain the chemical process of photosynthesis.",
+    agent_type="cot",  # Options: cot, react, hugginggpt, rafa, reactxen
+    model_id=14,
+    ...
+)
+agent.run()

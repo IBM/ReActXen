@@ -40,6 +40,8 @@ To get started with this project, follow these steps:
     Simply run the following command to install the package and its dependencies:
     ```bash
     pip install .
+    pip install .[autoq]
+    pip install .[langgraph,autoq]
     ```
 
 4. If you need to clean or remove the Python virtual environment (`reactxen`), follow these steps:

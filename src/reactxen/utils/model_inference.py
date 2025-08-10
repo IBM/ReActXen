@@ -244,8 +244,8 @@ def watsonx_llm_chat(
         persistent_connection=False,
     )
 
-    messages = get_chat_message(messages, is_system_prompt, replace_system_by_assistant)
-    generated_response = model.chat(messages=prompt)
+    messages = get_chat_message(prompt, is_system_prompt, replace_system_by_assistant)
+    generated_response = model.chat(messages=messages)
     return generated_response["choices"][0]
 
 

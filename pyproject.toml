@@ -27,6 +27,12 @@ mdextractor = "*"
 pendulum = "3.*"
 Jinja2 = "*"
 
+# Optional dependencies for specific use cases
+ray = { version = "*", optional = true }
+mlflow = { version = "*", optional = true }
+rouge_score = { version = "*", optional = true }
+datasketch = { version = "*", optional = true }
+
 [tool.poetry.group.dev.dependencies]
 black = "*"
 mypy = "*"
@@ -44,6 +50,7 @@ flake8 = "*"
 
 [tool.poetry.extras]
 langgraph = ["langgraph"]
+autoq = ["ray", "mallow", "rouge_score"]
 
 [build-system]
 # Updated build-backend to poetry-core for editable installs

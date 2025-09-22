@@ -2,6 +2,7 @@ import io
 import re
 import signal
 import sys
+import threading
 import warnings
 import importlib
 import json
@@ -63,11 +64,17 @@ from reactxen.agents.react.utils import ReActStyle
 from reactxen.agents.assessment_agent.agent import TaskAssessmentAgent
 
 
-def handler(signum, frame):
-    print("Code execution took too long")
-
-
-signal.signal(signal.SIGALRM, handler)
+# --- Cross-platform fix for signal.SIGALRM ---
+# On Linux/macOS: use SIGALRM as before.
+# On Windows: SIGALRM is not available, so fall back to threading.Timer
+if hasattr(signal, "SIGALRM"):
+    signal.signal(signal.SIGALRM, handler)
+else:
+    # Emulate timeout behavior with threading.Timer on Windows
+    _timeout_timer = threading.Timer(5, handler, args=(None, None))
+    _timeout_timer.daemon = True
+    _timeout_timer.start()
+# --- End of cross-platform fix ---
 
 
 # This class is used only when we have understanding of

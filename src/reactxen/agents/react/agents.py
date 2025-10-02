@@ -63,6 +63,8 @@ from functools import partial
 from reactxen.agents.react.utils import ReActStyle
 from reactxen.agents.assessment_agent.agent import TaskAssessmentAgent
 
+def handler(signum, frame):
+    pass
 
 # --- Cross-platform fix for signal.SIGALRM ---
 # On Linux/macOS: use SIGALRM as before.

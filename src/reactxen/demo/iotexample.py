@@ -32,12 +32,13 @@ def main(mode, model_id):
         "tool_desc": get_tool_description(tools),
         "tool_names": [ 'sensors' ],
         "react_example": MPE_SIMPLE4 + """
-            Question: download metadata for Chiller 4 at MAIN site
-            Thought 1: I need to get the sensor data for Chiller 4 at site MAIN to answer the question.
+
+            Question: download metadata for Chiller 4 at the "MAIN" site
+            Thought 1: I need to get the sensor data for "Chiller 4" at site "MAIN" to answer the question.
             Action 1: sensors
             Action Input 1: assetnum=Chiller 4, site_name=MAIN
             Observation 1: {"site_name": "MAIN", "assetnum": "Chiller 4", "total_sensors": 2, "file_path": "/var/folders/fz/l1h7gpv96rv5lg6m_d6bk0gc0000gn/T/cbmdir/c6571941-4857-4701-bd8a-9a28fa2435c3.json", "message": "found 2 sensors for assetnum Chiller 4 and site_name MAIN. file_path contains a JSON array of Sensor data"}
-            Thought 2: I now have the sensor data for Chiller 4 at site MAIN, which is stored in a file.
+            Thought 2: I now have the sensor data for "Chiller 4" at site "MAIN", which is stored in a file.
             Action 2: Finish
             Action Input 2: The sensor data for Chiller 4 at site MAIN has been downloaded and is listed in file /var/folders/fz/l1h7gpv96rv5lg6m_d6bk0gc0000gn/T/cbmdir/c6571941-4857-4701-bd8a-9a28fa2435c3.json.
         """,

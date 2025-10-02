@@ -76,12 +76,12 @@ In the **hello_world_math.py** demo, the ReActXen framework is used to solve the
 
 The question asks the agent to find the value of \(r\) that satisfies the logarithmic equation.
 
-1. Execute the demo script (id 14 = granite 3.2 preview)
+1. Execute the demo script (id 15 = granite 3.2, ibm/granite-3-2-8b-instruct)
 
     ```bash
     cd src/reactxen/demo
-    python hello_world_math.py --mode code --model_id 14 # for code model
-    python hello_world_math.py --mode text --model_id 14 # for text model
+    python hello_world_math.py --mode code --model_id 15 # for code model
+    python hello_world_math.py --mode text --model_id 15 # for text model
     ```
 
 ## API Functions

@@ -434,8 +434,6 @@ class BMSSensors(BaseTool):
     def _run(self, site_name: str, assetnum: str) -> str:
 
         try:
-            print(f'*** ENTRY')
-            exit(1)
             if site_name not in SITES:
                 raise ValueError(f'unknown site "{site_name}"')
             

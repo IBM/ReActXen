@@ -1,8 +1,34 @@
 # ReAct eXtENded Agent Design (ReActXen)
 
-This repository contains the implementation of the **ReActXen** framework, focused on agent-based design and interaction. It has been referred to as **ReAct++**, **Enhanced ReAct**, etc.
+[![EMNLP 2025](https://img.shields.io/badge/EMNLP-2025-blue)](https://openreview.net/forum?id=luETrQw0j6)
+[![PDF](https://img.shields.io/badge/PDF-Available-green)](https://openreview.net/pdf?id=luETrQw0j6)
 
-[📄 Tutorial PDF](./docs/tutorial/ReActXen_IoT_Agent_EMNLP_2025.pdf)
+This repository contains the implementation of the **ReActXen** framework, focused on agent-based design and interaction.  
+It has been referred to as **ReAct++**, **Enhanced ReAct**, etc.
+
+📘 [Tutorial PDF](./docs/tutorial/ReActXen_IoT_Agent_EMNLP_2025.pdf)
+
+---
+
+## 📄 Publication
+
+Our work has been accepted at **[EMNLP 2025 Industry Track](https://openreview.net/forum?id=luETrQw0j6)** 🎉  
+
+> **ReAct Meets Industrial IoT: Language Agents for Data Access**  
+> *James T. Rayfield, Shuxin Lin, Nianjun Zhou, Dhaval C. Patel*  
+
+📑 [Read the Paper (OpenReview PDF)](https://openreview.net/pdf?id=luETrQw0j6)
+
+### Citation
+If you use this work, please cite:
+```bibtex
+@inproceedings{patel2025react,
+  title     = {ReAct Meets Industrial IoT: Language Agents for Data Access},
+  author    = {James T. Rayfield and Shuxin Lin and Nianjun Zhou and Dhaval C. Patel},
+  booktitle = {Proceedings of the 2025 Conference on Empirical Methods in Natural Language Processing: Industry Track},
+  year      = {2025},
+  url       = {https://openreview.net/forum?id=luETrQw0j6}
+}
 
 ### Overview
 

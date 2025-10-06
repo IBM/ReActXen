@@ -2,6 +2,8 @@
 
 This repository contains the implementation of the **ReActXen** framework, focused on agent-based design and interaction. It has been referred to as **ReAct++**, **Enhanced ReAct**, etc.
 
+[📄 Tutorial PDF](./docs/tutorial/ReActXen_IoT_Agent_EMNLP_2025.pdf)
+
 ### Overview
 
 The **ReActXen** framework is built on the **Agent-Family** that has multiple helper agents as outlined in the following diagram. The ReAct agent supports both **text generation** and **code generation** based on the specified action. 

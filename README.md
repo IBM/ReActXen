@@ -29,6 +29,7 @@ If you use this work, please cite:
   year      = {2025},
   url       = {https://openreview.net/forum?id=luETrQw0j6}
 }
+```
 
 ### Overview
 

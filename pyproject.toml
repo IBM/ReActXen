@@ -11,7 +11,7 @@ packages = [{ include = "reactxen", from = "src" }]
 
 [tool.poetry.dependencies]
 python = ">=3.12,<3.15"
-langchain = "^0.3"
+langchain = "^1.0.0"
 langchain-core = "*"
 langchain-experimental = "*"
 langchain-ibm = "*"

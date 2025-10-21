@@ -52,6 +52,10 @@ modelset = [
     "meta-llama/llama-4-scout-17b-16e-instruct", #17
     "openai-azure/gpt-4.1-2025-04-14", #18
     "ibm/granite-3-3-8b-instruct",  # 19
+    "openai/gpt-oss-120b", # 20
+    "openai/gpt-oss-20b", # 21
+    "mistralai/mistral-medium-2505", # 22
+    "mistralai/mistral-small-3-1-24b-instruct-2503", #23
 ]
 
 
@@ -78,6 +82,10 @@ def get_context_length(model_id):
         "meta-llama/llama-4-scout-17b-16e-instruct": 1000000,
         "openai-azure/gpt-4.1-2025-04-14": 10000000, #18
         "ibm/granite-3-3-8b-instruct": 128000,  # 19
+        "openai/gpt-oss-120b": 128000, # 20
+        "openai/gpt-oss-20b": 128000, # 21
+        "mistralai/mistral-medium-2505": 128000, #22
+        "mistralai/mistral-small-3-1-24b-instruct-2503": 128000, #23
     }
 
     if isinstance(model_id, str):

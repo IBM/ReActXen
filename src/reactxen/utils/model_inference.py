@@ -12,6 +12,7 @@ from openai import OpenAI
 from openai import AzureOpenAI
 from dotenv import load_dotenv
 from reactxen.experimental.wrapper.utils.prepare_chat_message import get_chat_message
+from typing import Optional
 
 load_dotenv()
 
@@ -175,6 +176,7 @@ def watsonx_llm(
     stop=None,
     seed=None,
     is_system_prompt=False,
+    reasoning_effort=None,
 ):
     # Get the model name from modelset
     if isinstance(model_id, str) and model_id in modelset:
@@ -208,6 +210,7 @@ def watsonx_llm(
             n=n,
             stop=stop,
             seed=seed,
+            reasoning_effort=reasoning_effort,
         )
 
     if isinstance(stop, str):
@@ -401,7 +404,12 @@ def litellm_call(
     stop=None,
     seed=None,
     is_system_prompt: bool = False,
+    reasoning_effort: Optional[
+        str
+    ] = None,  # 'none', 'minimal', 'low', 'medium', 'high'
 ):
+
+    # transitio  from LLM to LRM, being a leaderboard developer, w keep track of these development and wait for the right time to include the cost sensitive experiments. for example there is a transtion from Chat completion to ResponseAPI in order to sim
 
     # Load environment variables (no hard-coding)
     api_key = os.getenv("LITELLM_API_KEY")
@@ -421,13 +429,29 @@ def litellm_call(
     else:  # "sampling"
         top_p = 1.0 if temperature > 0 else 1.0
 
-    # Define Azure GPT-5 models
+    # --- Azure Models (Uses extra_body for reasoning) ---
     azure_gpt5_models = [
         "Azure/gpt-5-2025-08-07",
         "Azure/gpt-5-mini-2025-08-07",
         "Azure/gpt-5-nano-2025-08-07",
-        "Azure/gpt-5-chat-2025-08-07",
     ]
+
+    # --- GCP Gemini Models (Uses LiteLLM's mapping for thinking parameters) ---
+    # Note: Gemini 2.5 Pro cannot disable thinking (reasoning_effort="none" is ignored).
+    gcp_gemini_models = [
+        "GCP/gemini-2.5-pro",
+        "GCP/gemini-2.5-flash",
+    ]
+
+    # --- GCP Claude Models (Uses LiteLLM's mapping for thinking budget) ---
+    # Claude 3.7 Sonnet, Claude 4 Sonnet, and Claude Opus 4/4.5 support this control.
+    gcp_claude_models = [
+        "GCP/claude-3-7-sonnet",
+        "GCP/claude-4-sonnet",
+        "GCP/claude-opus-4",
+    ]
+
+    REASONING_MODELS = azure_gpt5_models + gcp_gemini_models + gcp_claude_models
 
     # Handle decoding strategy
     if decoding_method == "greedy":
@@ -440,6 +464,9 @@ def litellm_call(
         temperature_setting = max(
             temperature_setting, 1.0
         )  # Azure GPT-5 requires temp>=1
+
+    if reasoning_effort and model_id in gcp_claude_models:
+        temperature_setting = 1.0
 
     # Build request
     request_kwargs = {
@@ -457,6 +484,32 @@ def litellm_call(
     # Drop top_p for Azure GPT-5 models
     if model_id not in azure_gpt5_models:
         request_kwargs["top_p"] = 1.0
+
+    reasoning_effort_to_budget = {
+        "minimal": 512,
+        "low": 1024,
+        "medium": 8192,
+        "high": 24576,
+    }
+    # --- 🔑 CORE CHANGE: Add reasoning_effort for all supported LRMs ---
+    # LiteLLM detects the model and automatically maps 'reasoning_effort'
+    # to the correct provider parameter (e.g., 'extra_body' for Azure, 'thinking_budget' for Gemini/Claude).
+    if model_id in REASONING_MODELS and reasoning_effort is not None:
+        if model_id in gcp_gemini_models or model_id in azure_gpt5_models:
+            request_kwargs["reasoning_effort"] = reasoning_effort.lower()
+        elif model_id in gcp_claude_models:
+            request_kwargs["max_tokens"] = (
+                max_tokens + reasoning_effort_to_budget[reasoning_effort.lower()]
+            )
+            extra_body = {
+                "thinking": {
+                    "type": "enabled",
+                    "budget_tokens": reasoning_effort_to_budget[
+                        reasoning_effort.lower()
+                    ],
+                }
+            }
+            request_kwargs["extra_body"] = extra_body
 
     # Call LiteLLM
     response = client.chat.completions.create(**request_kwargs)

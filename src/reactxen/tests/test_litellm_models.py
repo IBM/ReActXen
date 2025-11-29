@@ -11,7 +11,7 @@ LITELLM_MODELS = [
     "Azure/gpt-5-2025-08-07",         # 29
     "Azure/gpt-5-mini-2025-08-07",    # 30
     "Azure/gpt-5-nano-2025-08-07",    # 31
-    "Azure/gpt-5-chat-2025-08-07",    # 32
+    #"Azure/gpt-5-chat-2025-08-07",    # 32
     "GCP/gemini-2.5-flash",           # 33
     "GCP/gemini-2.5-pro",             # 34
     "GCP/gemini-2.5-flash-lite",      # 35
@@ -34,7 +34,8 @@ for model in LITELLM_MODELS:
             prompt=prompt,
             model_id=model,
             temperature=0.0,
-            max_tokens=500
+            max_tokens=500,
+            reasoning_effort=None,
         )
         elapsed = round(time.time() - start, 2)
 

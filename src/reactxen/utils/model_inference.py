@@ -48,15 +48,47 @@ modelset = [
     "openai-azure/o1-preview",  # 13
     "ibm/granite-3-2-8b-instruct-preview-rc",  # 14
     "ibm/granite-3-2-8b-instruct",  # 15
-    "meta-llama/llama-4-maverick-17b-128e-instruct-fp8", #16
-    "meta-llama/llama-4-scout-17b-16e-instruct", #17
-    "openai-azure/gpt-4.1-2025-04-14", #18
+    "meta-llama/llama-4-maverick-17b-128e-instruct-fp8",  # 16
+    "meta-llama/llama-4-scout-17b-16e-instruct",  # 17
+    "openai-azure/gpt-4.1-2025-04-14",  # 18
     "ibm/granite-3-3-8b-instruct",  # 19
-    "openai/gpt-oss-120b", # 20
-    "openai/gpt-oss-20b", # 21
-    "mistralai/mistral-medium-2505", # 22
-    "mistralai/mistral-small-3-1-24b-instruct-2503", #23
+    "openai/gpt-oss-120b",  # 20
+    "openai/gpt-oss-20b",  # 21
+    "mistralai/mistral-medium-2505",  # 22
+    "mistralai/mistral-small-3-1-24b-instruct-2503",  # 23
+    "litellm/GCP/gemini-2.0-flash",  # 24
+    "litellm/GCP/gemini-2.0-flash-lite",  # 25
+    "litellm/GCP/gemini-1.5-pro",  # 26
+    "litellm/GCP/claude-3-5-haiku",  # 27
+    "litellm/GCP/claude-3-7-sonnet",  # 28
+    "litellm/Azure/gpt-5-2025-08-07",  # 29
+    "litellm/Azure/gpt-5-mini-2025-08-07",  # 30
+    "litellm/Azure/gpt-5-nano-2025-08-07",  # 31
+    "litellm/Azure/gpt-5-chat-2025-08-07",  # 32
+    "litellm/GCP/gemini-2.5-flash",  # 33
+    "litellm/GCP/gemini-2.5-pro",  # 34
+    "litellm/GCP/gemini-2.5-flash-lite",  # 35
+    "litellm/GCP/claude-4-sonnet",  # 36
+    "litellm/GCP/claude-opus-4",  # 37
 ]
+
+
+def get_api_version(model_id):
+    context_dict = {
+        "openai-azure/gpt-4.1-2025-04-14": "2024-12-01-preview",  # 24
+        "openai-azure/gpt-4.1-mini-2025-04-14": "2024-12-01-preview",  # 25
+        "openai-azure/gpt-4.1-nano-2025-04-14": "2024-12-01-preview",  # 26
+        "openai-azure/o3-2025-04-16": "2024-12-01-preview",  # 27
+        "openai-azure/o4-mini-2025-04-16": "2024-12-01-preview",  # 28
+        "openai-azure/gpt-5-2025-08-07": "2025-03-01-preview",  # 29
+        "openai-azure/gpt-5-mini-2025-08-07": "2025-03-01-preview",  # 30
+        "openai-azure/gpt-5-nano-2025-08-07": "2025-03-01-preview",  # 31
+    }
+    if isinstance(model_id, str):
+        if model_id in context_dict:
+            return context_dict[model_id]
+        else:
+            return None
 
 
 # this part is for get the context length
@@ -80,12 +112,26 @@ def get_context_length(model_id):
         "ibm/granite-3-2-8b-instruct": 128000,  # 15
         "meta-llama/llama-4-maverick-17b-128e-instruct-fp8": 10000000,
         "meta-llama/llama-4-scout-17b-16e-instruct": 1000000,
-        "openai-azure/gpt-4.1-2025-04-14": 10000000, #18
+        "openai-azure/gpt-4.1-2025-04-14": 10000000,  # 18
         "ibm/granite-3-3-8b-instruct": 128000,  # 19
-        "openai/gpt-oss-120b": 128000, # 20
-        "openai/gpt-oss-20b": 128000, # 21
-        "mistralai/mistral-medium-2505": 128000, #22
-        "mistralai/mistral-small-3-1-24b-instruct-2503": 128000, #23
+        "openai/gpt-oss-120b": 128000,  # 20
+        "openai/gpt-oss-20b": 128000,  # 21
+        "mistralai/mistral-medium-2505": 128000,  # 22
+        "mistralai/mistral-small-3-1-24b-instruct-2503": 128000,  # 23
+        "litellm/GCP/gemini-2.0-flash": 1048576,
+        "litellm/GCP/gemini-2.0-flash-lite": 1048576,
+        "litellm/GCP/gemini-1.5-pro": 2097152,
+        "litellm/GCP/claude-3-5-haiku": 200000,
+        "litellm/GCP/claude-3-7-sonnet": 200000,
+        "litellm/Azure/gpt-5-2025-08-07": 400000,
+        "litellm/Azure/gpt-5-mini-2025-08-07": 400000,
+        "litellm/Azure/gpt-5-nano-2025-08-07": 400000,
+        "litellm/Azure/gpt-5-chat-2025-08-07": 400000,
+        "litellm/GCP/gemini-2.5-flash": 1000000,
+        "litellm/GCP/gemini-2.5-pro": 1000000,
+        "litellm/GCP/gemini-2.5-flash-lite": 1000000,
+        "litellm/GCP/claude-4-sonnet": 200000,
+        "litellm/GCP/claude-opus-4": 200000,
     }
 
     if isinstance(model_id, str):
@@ -152,6 +198,17 @@ def watsonx_llm(
             stop=stop,
             seed=seed,
         )
+    elif selected_model.startswith("litellm/"):
+        return litellm_call(
+            prompt=prompt,
+            model_id=selected_model.replace("openai-azure/", ""),
+            decoding_method=decoding_method,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            n=n,
+            stop=stop,
+            seed=seed,
+        )
 
     if isinstance(stop, str):
         stop = [stop]
@@ -173,7 +230,7 @@ def watsonx_llm(
         api_key=keys,
     )
 
-    #print("Here this i know its you....")
+    # print("Here this i know its you....")
     model = ModelInference(
         model_id=selected_model,
         params=parameters,
@@ -181,7 +238,7 @@ def watsonx_llm(
         project_id=project_id,
         max_retries=5,
         delay_time=2,
-        retry_status_codes=[502, 503]
+        retry_status_codes=[502, 503],
     )
 
     # Send the entire payload - ["generated_text"], promptTokens, completionTokens
@@ -189,13 +246,13 @@ def watsonx_llm(
         generated_response = model.generate(prompt=prompt)
     except Exception as e:
         print(f"Error occurred: {e}")
-    #print("Here this i know its completed....")
+    # print("Here this i know its completed....")
 
-    return generated_response["results"][0]  
-    #print (stop)
-    #return_response = generated_response["results"][0]
-    #return_response["generated_text"] = maybe_trim_generated_text(return_response, stop)
-    #return return_response
+    return generated_response["results"][0]
+    # print (stop)
+    # return_response = generated_response["results"][0]
+    # return_response["generated_text"] = maybe_trim_generated_text(return_response, stop)
+    # return return_response
 
 
 def watsonx_llm_chat(
@@ -334,6 +391,93 @@ def azure_openai_llm(
     return response_object
 
 
+def litellm_call(
+    prompt: str,
+    model_id: str = "o1-preview",
+    decoding_method: str = "greedy",  # greedy / sampling
+    temperature: float = 0.0,
+    max_tokens: int = 500,
+    n: int = 1,
+    stop=None,
+    seed=None,
+    is_system_prompt: bool = False,
+):
+
+    # Load environment variables (no hard-coding)
+    api_key = os.getenv("LITELLM_API_KEY")
+    base_url = os.getenv("LITELLM_BASE_URL")
+
+    if api_key is None:
+        raise ValueError("❗ Environment variable LITELLM_API_KEY is not set")
+    if base_url is None:
+        raise ValueError("❗ Environment variable LITELLM_BASE_URL is not set")
+
+    client = openai.OpenAI(api_key=api_key, base_url=base_url)
+
+    # Handle decoding strategies
+    if decoding_method == "greedy":
+        temperature = 0.0
+        top_p = 1.0
+    else:  # "sampling"
+        top_p = 1.0 if temperature > 0 else 1.0
+
+    # Define Azure GPT-5 models
+    azure_gpt5_models = [
+        "Azure/gpt-5-2025-08-07",
+        "Azure/gpt-5-mini-2025-08-07",
+        "Azure/gpt-5-nano-2025-08-07",
+        "Azure/gpt-5-chat-2025-08-07",
+    ]
+
+    # Handle decoding strategy
+    if decoding_method == "greedy":
+        temperature_setting = 0.0
+    else:  # sampling
+        temperature_setting = temperature
+
+    # Adjust temperature for Azure GPT-5 models
+    if model_id in azure_gpt5_models:
+        temperature_setting = max(
+            temperature_setting, 1.0
+        )  # Azure GPT-5 requires temp>=1
+
+    # Build request
+    request_kwargs = {
+        "model": model_id,
+        "messages": [
+            {"role": "system" if is_system_prompt else "user", "content": prompt}
+        ],
+        "max_tokens": max_tokens,
+        "n": n,
+        "stop": stop,
+        "seed": seed,
+        "temperature": temperature_setting,
+    }
+
+    # Drop top_p for Azure GPT-5 models
+    if model_id not in azure_gpt5_models:
+        request_kwargs["top_p"] = 1.0
+
+    # Call LiteLLM
+    response = client.chat.completions.create(**request_kwargs)
+
+    # Extract generated text
+    if n == 1:
+        generated_text = response.choices[0].message.content
+    else:
+        generated_text = [c.message.content for c in response.choices]
+
+    response_object = {
+        "generated_text": generated_text,
+        "promptTokens": getattr(response.usage, "prompt_tokens", None),
+        "input_token_count": getattr(response.usage, "prompt_tokens", None),
+        "completionTokens": getattr(response.usage, "completion_tokens", None),
+        "generated_token_count": getattr(response.usage, "completion_tokens", None),
+    }
+
+    return response_object
+
+
 def openaicall(messages, n=1, temperature=0.0, max_tokens=150, stop=None):
     # Set default for 'stop' if not provided
     if stop is None:
@@ -424,7 +568,9 @@ def gpt_usage(backend="bam"):
     }
 
 
-def count_tokens(input_text, model_id=None, upper_limit=10000000, skip_token_counting=False):
+def count_tokens(
+    input_text, model_id=None, upper_limit=10000000, skip_token_counting=False
+):
     """
     Counts the number of tokens in the given input based on the specified model.
 
@@ -461,8 +607,8 @@ def watsonx_count_tokens(text, model_id="mistralai/mistral-large", upper_limit=1
         api_key=os.environ["WATSONX_APIKEY"],
     )
 
-    #print ('started -----------')
-    #print (upper_limit)
+    # print ('started -----------')
+    # print (upper_limit)
     model = ModelInference(
         model_id=model_id,
         credentials=credentials,
@@ -470,7 +616,7 @@ def watsonx_count_tokens(text, model_id="mistralai/mistral-large", upper_limit=1
         max_retries=2,
         delay_time=2,
         retry_status_codes=[502, 503],
-        #persistent_connection=False,    # this did not work with tokenize
+        # persistent_connection=False,    # this did not work with tokenize
     )
 
     if len(text) > MAX_TEXT_LENGTH_TO_TOKENIZER:
@@ -494,7 +640,7 @@ def watsonx_count_tokens(text, model_id="mistralai/mistral-large", upper_limit=1
             total_count = upper_limit + 10
     except Exception as ex:
         pass
-    #print ('ended -----------')
+    # print ('ended -----------')
     return total_count
 
 
@@ -509,7 +655,7 @@ def openai_count_tokens(text, model="o1-preview", is_chat=False):
             enc = tiktoken.encoding_for_model(model)
         except:
             if openai_model:
-                #print(openai_model)
+                # print(openai_model)
                 enc = tiktoken.get_encoding("o200k_base")
             else:
                 raise KeyError(f"Could not find encoding for {model}.")

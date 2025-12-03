@@ -1,4 +1,4 @@
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 
 Scratchpad_Probe = """You are an intelligent reasoning agent responsible for answering questions posed by other agents. Your response should be based on prior context available in the scratchpad and the original question.  
 

@@ -6,6 +6,11 @@
 This repository contains the implementation of the **ReActXen** framework, focused on agent-based design and interaction.  
 It has been referred to as **ReAct++**, **Enhanced ReAct**, etc.
 
+The current version is 0.0.8. This uses python = ">=3.12,<3.14" and langchain = "^1.1.0".
+
+The previous version is tagged `0.0.7`
+
+
 📘 [Tutorial PDF](./docs/tutorial/ReActXen_IoT_Agent_EMNLP_2025.pdf)
 
 ---

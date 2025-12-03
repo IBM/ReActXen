@@ -2,7 +2,7 @@ from reactxen.agents.react.agents import ReactReflectAgent
 from reactxen.agents.react.utils import ActionStyle, ReActStyle
 from reactxen.agents.react.prompts.codesystemprompts import code_react_reflect_prompt, Block_python_code
 from typing import List, Optional, Callable, Literal
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 from langchain_core.tools import BaseTool
 
 def create_reactxen_agent(

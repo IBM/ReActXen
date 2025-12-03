@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "reactxen"
-version = "0.0.7"
+version = "0.0.8"
 authors = ["James, Nianjun, Dhaval"]
 description = "ReAct eXtended"
 readme = "README.md"
@@ -10,8 +10,8 @@ repository = "https://github.ibm.com/GenAIApps/ReActXen.git"
 packages = [{ include = "reactxen", from = "src" }]
 
 [tool.poetry.dependencies]
-python = ">=3.12,<3.15"
-langchain = "^0.3"
+python = ">=3.12,<3.14"
+langchain = "^1.1.0"
 langchain-core = "*"
 langchain-experimental = "*"
 langchain-ibm = "*"

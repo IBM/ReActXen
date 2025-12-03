@@ -1,4 +1,4 @@
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 
 MetaPlan_INSTRUCTION = """Decompose the given task into steps as an ordered list. Each step should be a single action that can be performed by one of the available tools.
 

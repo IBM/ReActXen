@@ -8,7 +8,7 @@ import importlib
 import json
 from enum import Enum
 from colorama import Fore, Style
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 import time
 from reactxen.agents.react.prompts.metaplanprompts import (
     metaplan_prompt,

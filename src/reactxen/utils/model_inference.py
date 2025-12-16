@@ -71,6 +71,8 @@ modelset = [
     "litellm/GCP/gemini-2.5-flash-lite",  # 35
     "litellm/GCP/claude-4-sonnet",  # 36
     "litellm/GCP/claude-opus-4",  # 37
+    "ibm/granite-4-h-small/",
+    "mistral-large-2512",
 ]
 
 
@@ -133,6 +135,8 @@ def get_context_length(model_id):
         "litellm/GCP/gemini-2.5-flash-lite": 1000000,
         "litellm/GCP/claude-4-sonnet": 200000,
         "litellm/GCP/claude-opus-4": 200000,
+        "ibm/granite-4-h-small/": 128000,
+        "mistral-large-2512": 256000,
     }
 
     if isinstance(model_id, str):
@@ -171,7 +175,7 @@ def watsonx_llm(
     model_id=8,
     decoding_method="greedy",
     temperature=0.0,
-    max_tokens=500,
+    max_tokens=10000,
     n=1,
     stop=None,
     seed=None,
@@ -203,7 +207,7 @@ def watsonx_llm(
     elif selected_model.startswith("litellm/"):
         return litellm_call(
             prompt=prompt,
-            model_id=selected_model.replace("openai-azure/", ""),
+            model_id=selected_model.replace("litellm/", ""),
             decoding_method=decoding_method,
             temperature=temperature,
             max_tokens=max_tokens,
@@ -481,6 +485,9 @@ def litellm_call(
         "temperature": temperature_setting,
     }
 
+    if "gpt-5" in model_id.lower():
+        request_kwargs["stop"] = None   # required for Azure GPT-5
+
     # Drop top_p for Azure GPT-5 models
     if model_id not in azure_gpt5_models:
         request_kwargs["top_p"] = 1.0
@@ -514,6 +521,8 @@ def litellm_call(
     # Call LiteLLM
     response = client.chat.completions.create(**request_kwargs)
 
+    print (response)
+
     # Extract generated text
     if n == 1:
         generated_text = response.choices[0].message.content
@@ -526,6 +535,7 @@ def litellm_call(
         "input_token_count": getattr(response.usage, "prompt_tokens", None),
         "completionTokens": getattr(response.usage, "completion_tokens", None),
         "generated_token_count": getattr(response.usage, "completion_tokens", None),
+        "reasoning_token_count": getattr(response.usage, "reasoning_tokens", None),
     }
 
     return response_object

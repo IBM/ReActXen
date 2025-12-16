@@ -75,25 +75,6 @@ modelset = [
     "mistral-large-2512",
 ]
 
-
-def get_api_version(model_id):
-    context_dict = {
-        "openai-azure/gpt-4.1-2025-04-14": "2024-12-01-preview",  # 24
-        "openai-azure/gpt-4.1-mini-2025-04-14": "2024-12-01-preview",  # 25
-        "openai-azure/gpt-4.1-nano-2025-04-14": "2024-12-01-preview",  # 26
-        "openai-azure/o3-2025-04-16": "2024-12-01-preview",  # 27
-        "openai-azure/o4-mini-2025-04-16": "2024-12-01-preview",  # 28
-        "openai-azure/gpt-5-2025-08-07": "2025-03-01-preview",  # 29
-        "openai-azure/gpt-5-mini-2025-08-07": "2025-03-01-preview",  # 30
-        "openai-azure/gpt-5-nano-2025-08-07": "2025-03-01-preview",  # 31
-    }
-    if isinstance(model_id, str):
-        if model_id in context_dict:
-            return context_dict[model_id]
-        else:
-            return None
-
-
 # this part is for get the context length
 def get_context_length(model_id):
     context_dict = {

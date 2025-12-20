@@ -71,9 +71,10 @@ modelset = [
     "litellm/GCP/gemini-2.5-flash-lite",  # 35
     "litellm/GCP/claude-4-sonnet",  # 36
     "litellm/GCP/claude-opus-4",  # 37
-    "ibm/granite-4-h-small/",
-    "mistral-large-2512",
+    "ibm/granite-4-h-small",  # 38
+    "mistral-large-2512",  # 39
 ]
+
 
 # this part is for get the context length
 def get_context_length(model_id):
@@ -116,7 +117,7 @@ def get_context_length(model_id):
         "litellm/GCP/gemini-2.5-flash-lite": 1000000,
         "litellm/GCP/claude-4-sonnet": 200000,
         "litellm/GCP/claude-opus-4": 200000,
-        "ibm/granite-4-h-small/": 128000,
+        "ibm/granite-4-h-small": 128000,
         "mistral-large-2512": 256000,
     }
 
@@ -156,7 +157,7 @@ def watsonx_llm(
     model_id=8,
     decoding_method="greedy",
     temperature=0.0,
-    max_tokens=10000,
+    max_tokens=8192,
     n=1,
     stop=None,
     seed=None,
@@ -297,8 +298,8 @@ def watsonx_llm_chat(
         persistent_connection=False,
     )
 
-    messages = get_chat_message(messages, is_system_prompt, replace_system_by_assistant)
-    generated_response = model.chat(messages=prompt)
+    messages = get_chat_message(prompt, is_system_prompt, replace_system_by_assistant)
+    generated_response = model.chat(messages=messages)
     return generated_response["choices"][0]
 
 
@@ -377,7 +378,6 @@ def azure_openai_llm(
 
     # print(response)
     return response_object
-
 
 def litellm_call(
     prompt: str,
@@ -466,8 +466,8 @@ def litellm_call(
         "temperature": temperature_setting,
     }
 
-    if "gpt-5" in model_id.lower():
-        request_kwargs["stop"] = None   # required for Azure GPT-5
+    # if "gpt-5" in model_id.lower():
+    #    request_kwargs["stop"] = None   # required for Azure GPT-5
 
     # Drop top_p for Azure GPT-5 models
     if model_id not in azure_gpt5_models:
@@ -502,7 +502,7 @@ def litellm_call(
     # Call LiteLLM
     response = client.chat.completions.create(**request_kwargs)
 
-    print (response)
+    print(response)
 
     # Extract generated text
     if n == 1:

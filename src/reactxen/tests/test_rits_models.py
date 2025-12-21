@@ -1,26 +1,21 @@
 import time
-from reactxen.utils.model_inference import litellm_call
+from reactxen.utils.model_inference import watsonx_llm
 
 # List of models exposed through LiteLLM Proxy — update as needed
 LITELLM_MODELS = [
-    "GCP/gemini-2.0-flash",           # 24
-    "GCP/gemini-2.0-flash-lite",      # 25
-    #"GCP/gemini-1.5-pro",             # 26
-    "GCP/claude-3-5-haiku",           # 27
-    "GCP/claude-3-7-sonnet",          # 28
-    "Azure/gpt-5-2025-08-07",         # 29
-    "Azure/gpt-5-mini-2025-08-07",    # 30
-    "Azure/gpt-5-nano-2025-08-07",    # 31
-    #"Azure/gpt-5-chat-2025-08-07",    # 32
-    "GCP/gemini-2.5-flash",           # 33
-    "GCP/gemini-2.5-pro",             # 34
-    "GCP/gemini-2.5-flash-lite",      # 35
-    "GCP/claude-4-sonnet",            # 36
-    "GCP/claude-opus-4",              # 37
+    #"rits/deepseek-ai/DeepSeek-V2.5",
+    #"rits/deepseek-ai/DeepSeek-V3.2",
+    #"rits/deepseek-ai/DeepSeek-V3",
+    "rits/openai/gpt-oss-20b",
+    "rits/Qwen/Qwen3-8B",
+    "rits/Qwen/Qwen2.5-72B-Instruct",
+    "rits/Qwen/Qwen3-30B-A3B-Thinking-2507",
+    "rits/meta-llama/Llama-3.1-8B-Instruct"
 ]
 
-
-prompt = "Write a short paragraph explaining predictive maintenance in industrial machines."
+prompt = (
+    "Write a short paragraph explaining predictive maintenance in industrial machines."
+)
 
 results = {}
 
@@ -31,13 +26,13 @@ for model in LITELLM_MODELS:
     start = time.time()
 
     try:
-        out = litellm_call(
+        out = watsonx_llm(
             prompt=prompt,
             model_id=model,
             temperature=0.0,
             max_tokens=1500,
-            reasoning_effort="medium",  #low
-            #stop=["maintenance", "Maintenance", " maintenance", " Maintenance"],
+            reasoning_effort="medium",  # low
+            # stop=["maintenance", "Maintenance", " maintenance", " Maintenance"],
         )
         elapsed = round(time.time() - start, 2)
 

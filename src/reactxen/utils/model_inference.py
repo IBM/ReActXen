@@ -73,6 +73,16 @@ modelset = [
     "litellm/GCP/claude-opus-4",  # 37
     "ibm/granite-4-h-small",  # 38
     "mistral-large-2512",  # 39
+    "rits/deepseek-ai/DeepSeek-V2.5", #40
+    "rits/deepseek-ai/DeepSeek-V3.2", #41
+    "rits/deepseek-ai/DeepSeek-V3",   #42
+    "rits/openai/gpt-oss-20b", #43
+    "rits/Qwen/Qwen3-8B", #44
+    "rits/Qwen/Qwen2.5-72B-Instruct", #45
+    "rits/Qwen/Qwen3-30B-A3B-Thinking-2507", #46
+    "rits/Qwen/Qwen3-VL-235B-A22B-Instruct", #47
+    "rits/Qwen/Qwen3-VL-235B-A22B-Thinking", #48
+    "rits/meta-llama/Llama-3.1-8B-Instruct", #49
 ]
 
 
@@ -119,6 +129,16 @@ def get_context_length(model_id):
         "litellm/GCP/claude-opus-4": 200000,
         "ibm/granite-4-h-small": 128000,
         "mistral-large-2512": 256000,
+        "rits/deepseek-ai/DeepSeek-V2.5": 128000,
+        "rits/deepseek-ai/DeepSeek-V3.2": 128000,
+        "rits/deepseek-ai/DeepSeek-V3": 128000,
+        "rits/openai/gpt-oss-20b": 128000,
+        "rits/Qwen/Qwen3-8B": 128000,
+        "rits/Qwen/Qwen2.5-72B-Instruct": 128000,
+        "rits/Qwen/Qwen3-30B-A3B-Thinking-2507": 256000,
+        "rits/Qwen/Qwen3-VL-235B-A22B-Instruct": 256000,
+        "rits/Qwen/Qwen3-VL-235B-A22B-Thinking": 256000,
+        "rits/meta-llama/Llama-3.1-8B-Instruct": 128000,
     }
 
     if isinstance(model_id, str):
@@ -198,6 +218,17 @@ def watsonx_llm(
             seed=seed,
             reasoning_effort=reasoning_effort,
         )
+    elif selected_model.startswith("rits/"):
+        from reactxen.experimental.wrapper.rits_llm import get_completion_response, get_chat_response
+        return get_chat_response(
+            prompt,
+            model_id=selected_model.replace("rits/", ""),
+            temperature=0,
+            max_tokens=2000,
+            stop=None,
+            num_retries=3,
+            seed=seed,
+            is_system_prompt=is_system_prompt)
 
     if isinstance(stop, str):
         stop = [stop]

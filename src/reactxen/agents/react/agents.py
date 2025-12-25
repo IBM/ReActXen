@@ -63,8 +63,10 @@ from functools import partial
 from reactxen.agents.react.utils import ReActStyle
 from reactxen.agents.assessment_agent.agent import TaskAssessmentAgent
 
+
 def handler(signum, frame):
     pass
+
 
 # --- Cross-platform fix for signal.SIGALRM ---
 # On Linux/macOS: use SIGALRM as before.
@@ -644,7 +646,7 @@ class ReactAgent:
             json_trajectory["final_answer"] = self.answer
             return json_trajectory
         except Exception as ex:
-            #print (ex)
+            # print (ex)
             return {}
 
     def print_final_answer(self):
@@ -696,6 +698,10 @@ class ReactAgent:
 
         while not self.is_halted() and not self.is_finished():
             self.step()
+
+            # break if llm error
+            if self.json_log[-1]['llm_error']:
+                break
 
             # check loop detection
             if self.apply_loop_detection_check:
@@ -760,7 +766,10 @@ class ReactAgent:
                 )
 
             # Check the total execution time
-            if self.max_execution_time != -1 and time.time() - start_time > self.max_execution_time:
+            if (
+                self.max_execution_time != -1
+                and time.time() - start_time > self.max_execution_time
+            ):
                 print(
                     f"{Style.BRIGHT}{Fore.MAGENTA}We cross the total alloted execution time{Style.RESET_ALL}"
                 )
@@ -856,6 +865,13 @@ class ReactAgent:
         else:
             return False
 
+    def handle_llm_error(self, let_me_think_dict) -> None:
+        if let_me_think_dict.get('error'):
+            self.json_log[-1]["llm_error"] = True
+            self.json_log[-1]["llm_error_detail"] = let_me_think_dict
+            return True
+        return False
+
     def step(self) -> None:
 
         if self.log_structured_messages:
@@ -880,6 +896,8 @@ class ReactAgent:
                     "step_metric_file_name": None,
                     "step_trajectory_json": None,
                     "step_metric_json": None,
+                    "llm_error": False,
+                    "llm_error_detail": False,
                 }
             )
 
@@ -900,6 +918,9 @@ class ReactAgent:
             let_me_think_dict = self.prompt_agent(
                 stop=["\nObservation"], prefix=f"Thought {self.step_n}:"
             )
+            if self.handle_llm_error(let_me_think_dict):
+                return
+
             if self.debug:
                 print(
                     f"{Style.BRIGHT}{Fore.RED}Debug Info (Step {self.step_n}):{Style.RESET_ALL}"
@@ -925,6 +946,9 @@ class ReactAgent:
             action_dict = self.prompt_agent(
                 stop=["\nObservation", "\nThought"], prefix=f"Action {self.step_n}:"
             )
+            if self.handle_llm_error(action_dict):
+                return
+
             if self.debug:
                 print(
                     f"{Style.BRIGHT}{Fore.RED}Debug Info (Step {self.step_n}):{Style.RESET_ALL}"
@@ -936,6 +960,8 @@ class ReactAgent:
             let_me_think_dict = self.prompt_agent(
                 stop=["\nAction", "\nObservation"], prefix=f"Thought {self.step_n}:"
             )
+            if self.handle_llm_error(let_me_think_dict):
+                return
             let_me_think = let_me_think_dict["thought"]
             if len(let_me_think) == 0:
                 retry = 0
@@ -949,6 +975,8 @@ class ReactAgent:
                         stop=["\nAction", "\nObservation"],
                         prefix=f"Thought {self.step_n}:",
                     )
+                    if self.handle_llm_error(let_me_think_dict):
+                        return
                     let_me_think = let_me_think_dict["thought"]
                 self.scratchpad = self.original_scratchpad
 
@@ -987,6 +1015,8 @@ class ReactAgent:
             action_dict = self.prompt_agent(
                 stop=["\nObservation", "\nThought"], prefix=f"Action {self.step_n}:"
             )
+            if self.handle_llm_error(action_dict):
+                return
 
             if self.debug:
                 print(
@@ -1210,6 +1240,8 @@ class ReactAgent:
                     stop=["\nThought", "\nAction"],
                     prefix=f"\nObservation {self.step_n}:",
                 )
+                if self.handle_llm_error(action_dict):
+                    return
                 if len(action_dict["observation"]) > 0:
                     self.scratchpad += action_dict["observation"]
                     action_execution_output = action_dict["observation"]
@@ -1621,6 +1653,14 @@ class ReactAgent:
         self.promptTokens += llmResult["input_token_count"]
         self.llmCalls += 1
 
+        if llmResult.get("finish_reason") == "error":
+            return {
+                "error": True,
+                "error_type": llmResult.get("error_type", "unknown"),
+                "error_feedback": llmResult.get("error", ""),
+                "controller_action": llmResult.get("controller_action", "ABORT_STEP"),
+            }
+
         return format_step(
             llmResult["generated_text"],
             stop,
@@ -1903,7 +1943,10 @@ class ReactReflectAgent(ReactAgent):
             self.per_round_info.append(self.get_experiment_summary())
 
             # Check the total execution time
-            if self.max_execution_time != -1 and time.time() - start_time > self.max_execution_time:
+            if (
+                self.max_execution_time != -1
+                and time.time() - start_time > self.max_execution_time
+            ):
                 print(
                     f"{Style.BRIGHT}{Fore.MAGENTA}We cross the total alloted execution time{Style.RESET_ALL}"
                 )

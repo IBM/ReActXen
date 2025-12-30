@@ -10,7 +10,7 @@ repository = "https://github.ibm.com/GenAIApps/ReActXen.git"
 packages = [{ include = "reactxen", from = "src" }]
 
 [tool.poetry.dependencies]
-python = ">=3.12,<3.14"
+python = ">=3.14,<3.15"
 langchain = "^1.1.0"
 langchain-core = "*"
 langchain-experimental = "*"

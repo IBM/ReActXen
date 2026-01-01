@@ -241,7 +241,7 @@ def watsonx_llm(
             reasoning_effort=reasoning_effort,
         )
     elif selected_model.startswith("rits/"):
-        from reactxen.experimental.wrapper.rits_llm import get_completion_response, get_chat_response
+        from reactxen.experimental.wrapper.rits_llm import get_chat_response
         return get_chat_response(
             prompt,
             model_id=selected_model.replace("rits/", ""),

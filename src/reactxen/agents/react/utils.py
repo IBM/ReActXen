@@ -511,3 +511,45 @@ def normalize_answer(s):
 
 def EM(answer, key) -> bool:
     return normalize_answer(answer) == normalize_answer(key)
+
+def apply_agent_controls(prompt, stop):
+    stop_str = " ".join(stop) if isinstance(stop, (list, tuple)) else str(stop)
+
+    has_obs = "Observation" in stop_str
+    has_action = "Action" in stop_str
+    has_thought = "Thought" in stop_str
+
+    prompt += "\n\n--- AGENT CONTROL OVERRIDE (LATEST ONLY) ---\n"
+
+    if has_obs and not has_action:
+        prompt += (
+            "[INSTRUCTION: GENERATION_PHASE_1]\n"
+            "Generate ONLY: Thought, Action, Action Input.\n"
+            "DO NOT generate Observation.\n"
+            "Stop immediately after Action Input.\n"
+            "End with <END_OF_TURN>."
+        )
+
+    elif has_thought:
+        prompt += (
+            "[INSTRUCTION: ACT_ONLY]\n"
+            "Provide ONLY Action and Action Input.\n"
+            "Do NOT repeat reasoning.\n"
+            "End with <END_OF_TURN>."
+        )
+
+    elif has_action:
+        prompt += (
+            "[INSTRUCTION: PLAN_ONLY]\n"
+            "Provide ONLY a Thought block.\n"
+            "Do NOT call tools.\n"
+            "End with <END_OF_TURN>."
+        )
+
+    else:
+        prompt += (
+            "Your response must conclude before reaching: "
+            f"{stop}\nEnd with <END_OF_TURN>."
+        )
+
+    return prompt

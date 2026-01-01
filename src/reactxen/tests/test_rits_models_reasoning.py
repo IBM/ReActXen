@@ -1,5 +1,6 @@
 import time
 from reactxen.utils.model_inference import watsonx_llm
+import json
 
 # List of models exposed through LiteLLM Proxy — update as needed
 LITELLM_MODELS = [
@@ -9,9 +10,7 @@ LITELLM_MODELS = [
     "rits/openai/gpt-oss-20b",
     "rits/openai/gpt-oss-120b",
     "rits/Qwen/Qwen3-8B",
-    "rits/Qwen/Qwen2.5-72B-Instruct",
     "rits/Qwen/Qwen3-30B-A3B-Thinking-2507",
-    "rits/meta-llama/Llama-3.1-8B-Instruct"
 ]
 
 prompt = (
@@ -31,13 +30,14 @@ for model in LITELLM_MODELS:
             prompt=prompt,
             model_id=model,
             temperature=0.0,
-            max_tokens=1500,
-            reasoning_effort="low",  # low
+            max_tokens=4096,
+            reasoning_effort="medium",  # low
             # stop=["maintenance", "Maintenance", " maintenance", " Maintenance"],
         )
         elapsed = round(time.time() - start, 2)
 
-        print(f"Response ({elapsed}s): {out}")
+        #print(f"Response ({elapsed}s): {out}")
+        print(json.dumps(out, indent=4))
         results[model] = {"status": "PASS", "time": elapsed, "output": out}
 
     except Exception as e:

@@ -46,7 +46,7 @@ def get_rits_client(hf_model_id="meta-llama/llama-3-1-70b-instruct", num_retries
         api_key=os.environ.get("RITS_API_KEY"),
         base_url=rits_api_base,
         default_headers={"RITS_API_KEY": os.environ["RITS_API_KEY"]},
-        timeout=120.0,
+        timeout=600.0,
         max_retries=num_retries,
     )
     print(client)
@@ -147,6 +147,7 @@ def get_chat_response(
             "reasoning_token_count": reasoning_text_token_count,
             "thinking_text": reasoning_text,
         }
+        print (response_object)
         return response_object
     except Exception as ex:
         print(ex)

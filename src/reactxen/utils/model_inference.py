@@ -73,17 +73,17 @@ modelset = [
     "litellm/GCP/claude-opus-4",  # 37
     "ibm/granite-4-h-small",  # 38
     "mistral-large-2512",  # 39
-    "rits/deepseek-ai/DeepSeek-V2.5", #40
-    "rits/deepseek-ai/DeepSeek-V3.2", #41
-    "rits/deepseek-ai/DeepSeek-V3",   #42
-    "rits/openai/gpt-oss-20b", #43
-    "rits/Qwen/Qwen3-8B", #44
-    "rits/Qwen/Qwen2.5-72B-Instruct", #45
-    "rits/Qwen/Qwen3-30B-A3B-Thinking-2507", #46
-    "rits/Qwen/Qwen3-VL-235B-A22B-Instruct", #47
-    "rits/Qwen/Qwen3-VL-235B-A22B-Thinking", #48
-    "rits/meta-llama/Llama-3.1-8B-Instruct", #49
-    "rits/openai/gpt-oss-120b", #50
+    "rits/deepseek-ai/DeepSeek-V2.5",  # 40
+    "rits/deepseek-ai/DeepSeek-V3.2",  # 41
+    "rits/deepseek-ai/DeepSeek-V3",  # 42
+    "rits/openai/gpt-oss-20b",  # 43
+    "rits/Qwen/Qwen3-8B",  # 44
+    "rits/Qwen/Qwen2.5-72B-Instruct",  # 45
+    "rits/Qwen/Qwen3-30B-A3B-Thinking-2507",  # 46
+    "rits/Qwen/Qwen3-VL-235B-A22B-Instruct",  # 47
+    "rits/Qwen/Qwen3-VL-235B-A22B-Thinking",  # 48
+    "rits/meta-llama/Llama-3.1-8B-Instruct",  # 49
+    "rits/openai/gpt-oss-120b",  # 50
 ]
 
 
@@ -173,6 +173,7 @@ def maybe_trim_generated_text(response: dict, stop_sequences: list) -> str:
         return trim_trailing_stop_sequence(text, stop_sequences)
     return text.rstrip()
 
+
 import re
 
 TOKEN_OVERFLOW_PATTERNS = [
@@ -181,6 +182,7 @@ TOKEN_OVERFLOW_PATTERNS = [
     r"exceed.*tokens limit",
     r"context length",
 ]
+
 
 def classify_watsonx_exception(e: Exception):
     msg = str(e).lower()
@@ -193,6 +195,7 @@ def classify_watsonx_exception(e: Exception):
     if "timeout" in msg:
         return "timeout"
     return "unknown"
+
 
 def watsonx_llm(
     prompt,
@@ -242,6 +245,7 @@ def watsonx_llm(
         )
     elif selected_model.startswith("rits/"):
         from reactxen.experimental.wrapper.rits_llm import get_chat_response
+
         return get_chat_response(
             prompt,
             model_id=selected_model.replace("rits/", ""),
@@ -251,7 +255,8 @@ def watsonx_llm(
             num_retries=3,
             seed=seed,
             is_system_prompt=is_system_prompt,
-            reasoning_effort=reasoning_effort)
+            reasoning_effort=reasoning_effort,
+        )
 
     if isinstance(stop, str):
         stop = [stop]
@@ -291,14 +296,13 @@ def watsonx_llm(
         print(f"Error occurred: {e}")
         etype = classify_watsonx_exception(e)
         response_object = {
-            ""
-            "generated_text": '',
+            "" "generated_text": "",
             "promptTokens": 0,
             "input_token_count": 0,
             "completionTokens": 0,
             "generated_token_count": 0,
             "reasoning_token_count": 0,
-            "thinking_text": '',
+            "thinking_text": "",
             "finish_reason": "error",
             "finish_reason": "error",
             "error_type": etype,
@@ -311,7 +315,6 @@ def watsonx_llm(
         else:
             response_object["controller_action"] = "ABORT_STEP"
         return response_object
-
 
     # print("Here this i know its completed....")
 
@@ -457,8 +460,9 @@ def azure_openai_llm(
     # print(response)
     return response_object
 
+
 def litellm_call(
-    prompt: str,
+    prompt: str | list[str],
     model_id: str = "o1-preview",
     decoding_method: str = "greedy",  # greedy / sampling
     temperature: float = 0.0,
@@ -483,7 +487,12 @@ def litellm_call(
     if base_url is None:
         raise ValueError("❗ Environment variable LITELLM_BASE_URL is not set")
 
-    client = openai.OpenAI(api_key=api_key, base_url=base_url)
+    client = openai.OpenAI(
+        api_key=api_key,
+        base_url=base_url,
+        timeout=600.0,  # hard socket timeout (seconds)
+        max_retries=3,  # automatic retry on transient failures
+    )
 
     # Handle decoding strategies
     if decoding_method == "greedy":
@@ -510,13 +519,13 @@ def litellm_call(
     gcp_gemini_models = [
         "GCP/gemini-2.5-pro",
         "GCP/gemini-2.5-flash",
-        "GCP/gemini-2.5-flash-lite"
+        "GCP/gemini-2.5-flash-lite",
     ]
 
     # --- GCP Claude Models (Uses LiteLLM's mapping for thinking budget) ---
     # Claude 3.7 Sonnet, Claude 4 Sonnet, and Claude Opus 4/4.5 support this control.
     # minimum 1024 token
-    # 
+    #
     gcp_claude_models = [
         "GCP/claude-3-7-sonnet",
         "GCP/claude-4-sonnet",
@@ -543,9 +552,7 @@ def litellm_call(
     # Build request
     request_kwargs = {
         "model": model_id,
-        "messages": [
-            {"role": "system" if is_system_prompt else "user", "content": prompt}
-        ],
+        "messages": get_chat_message(prompt, is_system_prompt),
         "max_tokens": max_tokens,
         "n": n,
         "stop": stop,
@@ -570,7 +577,7 @@ def litellm_call(
     # LiteLLM detects the model and automatically maps 'reasoning_effort'
     # to the correct provider parameter (e.g., 'extra_body' for Azure, 'thinking_budget' for Gemini/Claude).
     if model_id in REASONING_MODELS and reasoning_effort is not None:
-        
+
         # add reasoning token
         request_kwargs["max_tokens"] = (
             max_tokens + reasoning_effort_to_budget[reasoning_effort.lower()]
@@ -611,21 +618,13 @@ def litellm_call(
     reasoning_text = None
     reasoning_text_token_count = None
 
-    #print (response)
-
     # --- Extract reasoning tokens safely ---
     if hasattr(response.usage, "completion_tokens_details"):
         reasoning_text_token_count = getattr(
-            response.usage.completion_tokens_details,
-            "reasoning_tokens",
-            None
+            response.usage.completion_tokens_details, "reasoning_tokens", None
         )
 
-    reasoning_text = getattr(
-        response.choices[0].message,
-        "reasoning_content",
-        None
-    )
+    reasoning_text = getattr(response.choices[0].message, "reasoning_content", None)
 
     response_object = {
         "generated_text": generated_text,
@@ -634,9 +633,10 @@ def litellm_call(
         "completionTokens": getattr(response.usage, "completion_tokens", None),
         "generated_token_count": getattr(response.usage, "completion_tokens", None),
         "reasoning_token_count": reasoning_text_token_count,
-        "thinking_text": reasoning_text
+        "thinking_text": reasoning_text,
     }
 
+    print(response_object)
     return response_object
 
 
@@ -754,7 +754,7 @@ def count_tokens(
         selected_model = modelset[model_id]  # Ensure you have access to selected_model
 
     # Handle OpenAI model token counting
-    if "openai" in selected_model:
+    if "openai" in selected_model or 'litellm' in selected_model:
         return openai_count_tokens(
             input_text, selected_model
         )  # Adjust this function call if necessary
@@ -812,12 +812,16 @@ def openai_count_tokens(text, model="o1-preview", is_chat=False):
     if model.startswith("openai-azure/"):
         openai_model = True
         model = model.replace("openai-azure/", "")
+    elif model.startswith("litellm/"):
+        model = model.replace("litellm/", "")
+        openai_model = True
+    else:
+        pass
     try:
         try:
             enc = tiktoken.encoding_for_model(model)
         except:
             if openai_model:
-                # print(openai_model)
                 enc = tiktoken.get_encoding("o200k_base")
             else:
                 raise KeyError(f"Could not find encoding for {model}.")

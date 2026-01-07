@@ -866,7 +866,7 @@ class ReactAgent:
             return False
 
     def handle_llm_error(self, let_me_think_dict) -> None:
-        if let_me_think_dict.get('error'):
+        if self.log_structured_messages and let_me_think_dict.get('error'):
             self.json_log[-1]["llm_error"] = True
             self.json_log[-1]["llm_error_detail"] = let_me_think_dict
             return True

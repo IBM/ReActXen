@@ -700,7 +700,7 @@ class ReactAgent:
             self.step()
 
             # break if llm error
-            if self.json_log[-1]['llm_error']:
+            if self.log_structured_messages and self.json_log[-1]['llm_error']:
                 break
 
             # check loop detection

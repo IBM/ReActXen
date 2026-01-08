@@ -812,6 +812,9 @@ def openai_count_tokens(text, model="o1-preview", is_chat=False):
     if model.startswith("openai-azure/"):
         openai_model = True
         model = model.replace("openai-azure/", "")
+    elif model.startswith("openai/"):
+        openai_model = True
+        model = model.replace("openai/", "")
     elif model.startswith("litellm/"):
         model = model.replace("litellm/", "")
         openai_model = True

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "reactxen"
-version = "0.0.12"
+version = "0.0.13"
 authors = ["James, Nianjun, Dhaval"]
 description = "ReAct eXtended"
 readme = "README.md"

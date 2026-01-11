@@ -208,6 +208,7 @@ def watsonx_llm(
     seed=None,
     is_system_prompt=False,
     reasoning_effort=None,
+    forward_to_chat_template=False,
 ):
     # Get the model name from modelset
     if isinstance(model_id, str) and model_id in modelset:
@@ -256,6 +257,18 @@ def watsonx_llm(
             seed=seed,
             is_system_prompt=is_system_prompt,
             reasoning_effort=reasoning_effort,
+        )
+    elif forward_to_chat_template:
+        return watsonx_llm_chat(
+            prompt,
+            model_id=selected_model,
+            decoding_method=decoding_method,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            n=n,
+            stop=stop,
+            seed=seed,
+            is_system_prompt=is_system_prompt,
         )
 
     if isinstance(stop, str):
@@ -381,8 +394,18 @@ def watsonx_llm_chat(
 
     messages = get_chat_message(prompt, is_system_prompt, replace_system_by_assistant)
     generated_response = model.chat(messages=messages)
-    return generated_response["choices"][0]
+    usage = generated_response.get("usage", {})
 
+    response_object = {
+        "generated_text": generated_response["choices"][0]["message"]["content"],
+        "promptTokens": getattr(usage, "prompt_tokens", None),
+        "input_token_count": getattr(usage, "prompt_tokens", None),
+        "completionTokens": getattr(usage, "completion_tokens", None),
+        "generated_token_count": getattr(usage, "completion_tokens", None),
+        "reasoning_token_count": 0,
+        "thinking_text": None,
+    }
+    return response_object
 
 def azure_openai_llm(
     prompt,
@@ -754,7 +777,7 @@ def count_tokens(
         selected_model = modelset[model_id]  # Ensure you have access to selected_model
 
     # Handle OpenAI model token counting
-    if "openai" in selected_model or 'litellm' in selected_model:
+    if "openai" in selected_model or "litellm" in selected_model:
         return openai_count_tokens(
             input_text, selected_model
         )  # Adjust this function call if necessary

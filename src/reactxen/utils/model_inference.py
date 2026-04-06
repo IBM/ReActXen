@@ -84,6 +84,11 @@ modelset = [
     "rits/Qwen/Qwen3-VL-235B-A22B-Thinking",  # 48
     "rits/meta-llama/Llama-3.1-8B-Instruct",  # 49
     "rits/openai/gpt-oss-120b",  # 50
+    "litellm/azure/gpt-5.4", #51
+    "litellm/gcp/gemini-3.1-pro-preview",   #52
+    "litellm/aws/claude-opus-4-6",   # 53
+    "litellm/aws/claude-sonnet-4-6", # 54
+    "meta-llama/llama-3-2-11b-vision-instruct", #55
 ]
 
 
@@ -141,6 +146,11 @@ def get_context_length(model_id):
         "rits/Qwen/Qwen3-VL-235B-A22B-Thinking": 256000,
         "rits/meta-llama/Llama-3.1-8B-Instruct": 128000,
         "rits/openai/gpt-oss-120b": 128000,
+        "litellm/azure/gpt-5.4": 10000000,
+        "litellm/gcp/gemini-3.1-pro-preview": 10000000,
+        "litellm/aws/claude-opus-4-6": 10000000,
+        "litellm/aws/claude-sonnet-4-6": 10000000,
+        "meta-llama/llama-3-2-11b-vision-instruct": 128000,
     }
 
     if isinstance(model_id, str):
@@ -389,22 +399,24 @@ def watsonx_llm_chat(
         max_retries=5,
         delay_time=2,
         retry_status_codes=[502, 503],
-        persistent_connection=False,
+        persistent_connection=True,
     )
 
     messages = get_chat_message(prompt, is_system_prompt, replace_system_by_assistant)
     generated_response = model.chat(messages=messages)
-    usage = generated_response.get("usage", {})
+    usage = generated_response['usage']
+    #print (generated_response)
 
     response_object = {
         "generated_text": generated_response["choices"][0]["message"]["content"],
-        "promptTokens": getattr(usage, "prompt_tokens", None),
-        "input_token_count": getattr(usage, "prompt_tokens", None),
-        "completionTokens": getattr(usage, "completion_tokens", None),
-        "generated_token_count": getattr(usage, "completion_tokens", None),
+        "promptTokens": usage["prompt_tokens"],
+        "input_token_count": usage["prompt_tokens"],
+        "completionTokens": usage["completion_tokens"],
+        "generated_token_count": usage["completion_tokens"],
         "reasoning_token_count": 0,
         "thinking_text": None,
     }
+    #print (response_object)
     return response_object
 
 def azure_openai_llm(
@@ -532,6 +544,9 @@ def litellm_call(
         "Azure/gpt-5-2025-08-07",
         "Azure/gpt-5-mini-2025-08-07",
         "Azure/gpt-5-nano-2025-08-07",
+        "azure/gpt-5.4",
+        "aws/claude-opus-4-6",
+        "aws/claude-sonnet-4-6",
     ]
 
     # --- GCP Gemini Models (Uses LiteLLM's mapping for thinking parameters) ---
@@ -543,6 +558,7 @@ def litellm_call(
         "GCP/gemini-2.5-pro",
         "GCP/gemini-2.5-flash",
         "GCP/gemini-2.5-flash-lite",
+        "gcp/gemini-3.1-pro-preview",
     ]
 
     # --- GCP Claude Models (Uses LiteLLM's mapping for thinking budget) ---

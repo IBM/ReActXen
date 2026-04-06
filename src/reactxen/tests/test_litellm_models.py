@@ -17,8 +17,12 @@ LITELLM_MODELS = [
     "GCP/gemini-2.5-flash-lite",      # 35
     "GCP/claude-4-sonnet",            # 36
     "GCP/claude-opus-4",              # 37
+    "gcp/gemini-3.1-pro-preview",
+    "aws/claude-opus-4-6",
+    "aws/claude-sonnet-4-6",
 ]
 
+LITELLM_MODELS = [LITELLM_MODELS[-1]]
 
 prompt = "Write a short paragraph explaining predictive maintenance in industrial machines."
 

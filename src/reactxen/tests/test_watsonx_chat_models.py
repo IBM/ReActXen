@@ -15,6 +15,16 @@ LITELLM_MODELS = [
 
 prompt = "Write a short paragraph explaining predictive maintenance in industrial machines."
 
+prompt = """Please select the correct option(s) from the following options given the question:
+Question: In aero gas turbine, which sensor among the choices is least useful for detecting compressor stall?
+Options:
+A. pressure/ pressure ratio
+B. vibration
+C. gas generator temperature
+D. speed
+Your output must strictly follow this format:
+{"answer": <the list of selected options, e.g., ["A", "B", "C", "D"]>}"""
+
 results = {}
 
 print("\n================= LiteLLM Model Test Runner =================\n")

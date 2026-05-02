@@ -365,5 +365,5 @@ if __name__ == "__main__":
     #for i in range(0, 1000, 200):
     #    generate_solution(i, data, n_thread=8, batch_size=10)
 
-    for i in range(0, 1, 1):
-        generate_solution(i, data, n_thread=1, batch_size=1)
+    # first parameter corresponds to row you want in TruthfulQA.csv (-2 to row number to account for 0-indexing & header)
+    generate_solution(35, data, n_thread=1, batch_size=1)

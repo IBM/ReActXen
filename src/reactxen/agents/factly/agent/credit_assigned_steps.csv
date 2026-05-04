@@ -1,0 +1,5 @@
+filename,step,tool,rouge_l,jaccard,semantic_sim,observation,credit_score,normalized_credit
+35_Conspiracies_traj_output.json,1,wikipedia,0.044,0.027,0.324,"Page: W and Z bosons Summary: In particle physics, the W and Z bosons are vector bosons that are together known as the weak bosons or more generally as the intermediate vector bosons. These elementary",0.324,0.18546078992558673
+35_Conspiracies_traj_output.json,2,wikipedia,0.052,0.025,0.324,"Page: W and Z bosons Summary: In particle physics, the W and Z bosons are vector bosons that are together known as the weak bosons or more generally as the intermediate vector bosons. These elementary",0.324,0.18546078992558673
+35_Conspiracies_traj_output.json,3,Wikidata,0.26,0.021,0.235,No good Wikidata Search Result was found,0.235,0.1345163136805953
+35_Conspiracies_traj_output.json,4,duckduckgo_search,0.335,0.151,0.864,"The existence of this mass-giving field was confirmed in 2012, when the Higgs boson particle was discovered at CERN. The preliminary results with the full 2012 data set are magnificent and to me it is",0.864,0.4945621064682313

@@ -1,4 +1,5 @@
 #add step wise importance
+import sys
 import os
 import json
 import glob
@@ -124,8 +125,15 @@ def analyze_file_auto_verbose(filepath, debug_logs):
 
     return results
 
+def normalize_scores(scores, eps=1e-12):
+    scores = scores.fillna(0.0)
+    total = scores.sum()
+    if total <= eps:
+        return scores * 0.0
+    return scores / total
+
 # --- Main pipeline with per-file plots ---
-def run_credit_assignment_filewise_only(input_folder):
+def run_credit_assignment_filewise_only(input_folder, method="semantic"):
     json_files = glob.glob(os.path.join(input_folder, "*_traj_output.json"))
     debug_logs = []
     combined_results = []
@@ -139,22 +147,45 @@ def run_credit_assignment_filewise_only(input_folder):
                 continue
 
             df_file = pd.DataFrame(file_results)
-            # df_file["credit_score"] = 0.7 * df_file["rouge_l"] + 0.3 * df_file["jaccard"]
-            df_file["credit_score"] = df_file["semantic_sim"] # New one
-            total_score = df_file["credit_score"].sum()
-            df_file["normalized_credit"] = df_file["credit_score"] / total_score if total_score > 0 else 0
+            
+            # --- Score Calculations ---
+            # lexical_credit_score is the original baseline: 0.7 * ROUGE-L + 0.3 * Jaccard
+            df_file["lexical_credit_score"] = 0.7 * df_file["rouge_l"] + 0.3 * df_file["jaccard"]
+            
+            # semantic_credit_score is the new embedding-based method
+            df_file["semantic_credit_score"] = df_file["semantic_sim"]
+
+            # Compute normalized scores side by side
+            df_file["lexical_credit_norm"] = normalize_scores(df_file["lexical_credit_score"])
+            df_file["semantic_credit_norm"] = normalize_scores(df_file["semantic_credit_score"])
+
+            # Default fallback column based on active method
+            if method == "lexical":
+                df_file["credit_score"] = df_file["lexical_credit_score"]
+                df_file["normalized_credit"] = df_file["lexical_credit_norm"]
+            else:
+                df_file["credit_score"] = df_file["semantic_credit_score"]
+                df_file["normalized_credit"] = df_file["semantic_credit_norm"]
 
             combined_results.extend(df_file.to_dict(orient="records"))
 
-            file_credit = df_file.groupby("tool")["normalized_credit"].sum().reset_index()
+            # --- Tool-Level Aggregation ---
+            file_credit = df_file.groupby("tool").agg(
+                tool_credit_lexical=("lexical_credit_norm", "sum"),
+                tool_credit_semantic=("semantic_credit_norm", "sum"),
+                normalized_credit=("normalized_credit", "sum")
+            ).reset_index()
+            
             file_credit["source_file"] = os.path.basename(file)
+            file_credit["tool_credit"] = file_credit["normalized_credit"] # Backward compatibility mapping
+            
             all_filewise_credits.append(file_credit)
 
             # Save per-file plot
             fig, ax = plt.subplots(figsize=(8, 4))
             ax.bar(file_credit["tool"], file_credit["normalized_credit"])
-            ax.set_title(f"Tool Credit: {os.path.basename(file)}")
-            ax.set_ylabel("Normalized Credit")
+            ax.set_title(f"Tool Credit: {os.path.basename(file)} ({method.capitalize()})")
+            ax.set_ylabel(f"Normalized Credit ({method})")
             plt.xticks(rotation=45)
             plt.tight_layout()
             plot_name = f"{os.path.splitext(os.path.basename(file))[0]}_credit_plot.png"
@@ -173,12 +204,17 @@ def run_credit_assignment_filewise_only(input_folder):
     debug_df = pd.DataFrame(debug_logs, columns=["filename", "status"])
     return df_all, filewise_credit_df, debug_df
 
-# --- Run It ---
+
 if __name__ == "__main__":
     #input_dir = "/Users/nishugarg/Documents/research/30June/factly-main/factly/traj_store"  
     input_dir = "../traj_store"  # made the hardcoded path general to work for everyone
 
-    df_all_steps, df_filewise_credit, df_debug_logs = run_credit_assignment_filewise_only(input_dir)
+    method = "semantic"
+    if len(sys.argv) > 1:
+        method = sys.argv[1].lower()
+
+    print(f"Running credit assignment with primary method: {method}")
+    df_all_steps, df_filewise_credit, df_debug_logs = run_credit_assignment_filewise_only(input_dir, method=method)
 
     if df_all_steps is not None:
         df_all_steps.to_csv("credit_assigned_steps.csv", index=False)

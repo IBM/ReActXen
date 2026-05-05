@@ -1,0 +1,40 @@
+IMPORTANT:
+- You must respond only with a single valid JSON object with exactly two fields: "action" and "action_input".
+- Follow this priority sequence. Move to the next tool only if the current one yields insufficient evidence. The "action" field must be one of the following tools (case-sensitive):
+   1. `wikipedia` — Start here for most claims
+       Use for: named entities, historical events, established science, geography, public figures, organizations, and general knowledge.
+       Skip if: the claim is highly technical/scientific, very recent (post-2023), or involves specific numerical data not likely in Wikipedia.
+   2. `wikidata` — Use for structured facts
+       Use for: dates, IDs, relationships between entities (e.g., "X is the capital of Y", "Person A was born in year B"), or when Wikipedia prose was ambiguous and you need a structured fact to confirm.
+       Skip if: Wikipedia already gave a definitive answer.
+   3. `ddg-search` — Use for recent or niche claims
+       Use for: recent events, news, claims about products/companies/people that may not be in Wikipedia, or when steps 1–2 returned nothing useful.
+       Skip if: the claim is clearly historical or academic — DDG results will be noisy.
+   4. `semanticscholar` — Use for scientific/academic claims
+       Use for: research findings, medical claims, statistics from studies, technical benchmarks, or any claim that references academic literature.
+       Skip if: the claim is not scientific or the DDG results already surfaced a credible source.
+   5. `arxiv` — Use for cutting-edge AI/ML or preprint claims
+       Use for: claims about specific AI models, recent machine learning benchmarks, or technical results that may only exist as preprints.
+       Skip if: the claim is not about recent AI/ML/CS research. Do not use arxiv for general science — prefer semanticscholar.
+   6. `Finish` — Call when you have enough evidence
+       Call Finish when:
+       - You have found at least one high-quality source that directly supports or refutes the claim, OR
+       - You have exhausted all relevant tools and found no evidence (verdict: unverifiable).
+       Never call Finish before attempting at least one tool.
+
+- Decision Rules:
+   - Stop early: as soon as one tool returns a direct, unambiguous answer, call `Finish`. Do not keep searching to "double-check" unless the claim is high-stakes or the source seems unreliable.
+   - Skip irrelevant tools: if a claim is clearly in one domain, skip tools outside that domain entirely. A claim about Napoleon's birth year does not need arxiv or semanticscholar.
+   - Don't repeat tools: never call the same tool twice with the same or near-identical query. Rephrase only if the first query was poorly formed and no results were returned.
+   - Prioritize specificity: use the most specific tool first for the claim type:
+       - Scientific claim → go straight to `semanticscholar` or `arxiv`, skip wikipedia
+       - AI/ML benchmark claim → go straight to `arxiv`
+       - Structured fact (date, location) → try `wikidata` before wikipedia prose
+
+Search Strategy Guidance:
+- Use multiple tools (e.g., wikipedia, arXiv, ddg-search, wikidata, semanticscholar) during the search process.
+- If the initial results do not yield strong supporting or contradicting evidence, reformulate your queries and try alternative tools.
+- How you query the tools is critical — effective queries significantly influence what evidence is retrieved.
+- Use information from one tool (e.g., Wikipedia context or keywords from Semantic Scholar) to refine queries for another tool.
+- Iterate the search process until you are confident that sufficient effort has been made to locate the most relevant evidence.
+- Your goal is not to stop at the first relevant passage, but to ensure comprehensive coverage to justify the groundedness score accurately.

@@ -133,7 +133,8 @@ def normalize_scores(scores, eps=1e-12):
     return scores / total
 
 # --- Main pipeline with per-file plots ---
-def run_credit_assignment_filewise_only(input_folder, method="semantic"):
+def run_credit_assignment_filewise_only(input_folder, method="semantic", output_folder="credit_assignment_results"):
+    os.makedirs(output_folder, exist_ok=True)
     json_files = glob.glob(os.path.join(input_folder, "*_traj_output.json"))
     debug_logs = []
     combined_results = []
@@ -188,10 +189,11 @@ def run_credit_assignment_filewise_only(input_folder, method="semantic"):
             ax.set_ylabel(f"Normalized Credit ({method})")
             plt.xticks(rotation=45)
             plt.tight_layout()
-            plot_name = f"{os.path.splitext(os.path.basename(file))[0]}_credit_plot.png"
-            plt.savefig(plot_name)
+            plot_filename = f"{os.path.splitext(os.path.basename(file))[0]}_{method}_credit_plot.png"
+            plot_path = os.path.join(output_folder, plot_filename)
+            plt.savefig(plot_path)
             plt.close()
-            print(f"> Saved plot: {plot_name}")
+            print(f"> Saved plot: {plot_path}")
 
         except Exception as e:
             debug_logs.append((os.path.basename(file), f"Exception: {str(e)}"))
@@ -214,7 +216,8 @@ if __name__ == "__main__":
         method = sys.argv[1].lower()
 
     print(f"Running credit assignment with primary method: {method}")
-    df_all_steps, df_filewise_credit, df_debug_logs = run_credit_assignment_filewise_only(input_dir, method=method)
+    output_folder = "credit_assignment_results"
+    df_all_steps, df_filewise_credit, df_debug_logs = run_credit_assignment_filewise_only(input_dir, method=method, output_folder=output_folder)
 
     if df_all_steps is not None:
         df_all_steps.to_csv("credit_assigned_steps.csv", index=False)
@@ -225,6 +228,6 @@ if __name__ == "__main__":
         print("credit_assigned_steps.csv")
         print("tool_credit_summary_with_filenames.csv")
         print("credit_assignment_debug_log.csv")
-        print("And *_credit_plot.png per file")
+        print(f"And plots saved in: {output_folder}/")
     else:
         print("\n No valid data to process.")

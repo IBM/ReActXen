@@ -49,3 +49,27 @@ The script calculates a final Composite Score for each method using the formula:
 `Composite Score = (Success Rate * 0.4) + (Avg Groundedness * 0.4) - (Fault Rate * 0.2)`
 
 The scores are normalized to a 0-100 scale. The optimizer that produces the prompt with the highest composite score on the unseen validation dataset is declared the winner in `prompt_benchmark_summary.json`.
+
+---
+
+## 4. Running the Benchmark
+
+You can run the benchmark script from the terminal. By default, it will run all 4 methods (Baseline + the 3 Optimizers) on 5 questions.
+
+### Compare all 4 methods:
+```bash
+python benchmark_prompt_optimizers.py --n 5
+```
+
+### Compare only the three optimizers (skip the baseline):
+You can use the `--methods` flag to specify exactly which methods to evaluate.
+```bash
+python benchmark_prompt_optimizers.py --n 5 --methods v1,v2_lexical,v2_semantic
+```
+
+### Compare only the Baseline vs V1:
+```bash
+python benchmark_prompt_optimizers.py --n 5 --methods baseline,v1
+```
+
+**Available method keys:** `baseline`, `v1`, `v2_lexical`, `v2_semantic`, `all`.

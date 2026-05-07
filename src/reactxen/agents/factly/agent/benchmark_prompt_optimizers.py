@@ -35,8 +35,9 @@ _AGENT_DIR        = Path(__file__).resolve().parent
 _FACTLY_DIR       = _AGENT_DIR.parent
 _DATA_DIR         = _FACTLY_DIR / "data"
 _OUTPUT_DIR       = _AGENT_DIR / "benchmark_outputs"
+_ROOT_DIR         = _FACTLY_DIR.parents[3]
 
-sys.path.insert(0, str(_FACTLY_DIR.parents[3]))
+sys.path.insert(0, str(_ROOT_DIR))
 
 logging.basicConfig(
     level=logging.INFO,
@@ -81,6 +82,14 @@ def _run_validation_batch(
     """).strip()
 
     def _build_prompt(asset_name: str, claim_text: str, answer_text: str) -> str:
+        if prompt_text == "BASELINE":
+            from reactxen.agents.factly.agent.truthful_mcqa_checker import PROMPT_OG
+            return PROMPT_OG.format(
+                asset_name=asset_name,
+                claim_text=claim_text,
+                answer_text=answer_text
+            )
+
         system_section = (
             f"[SYSTEM INSTRUCTIONS]\n{prompt_text}\n\n"
             if prompt_text.strip() else ""
@@ -299,9 +308,9 @@ def main():
     parser.add_argument("--n", type=int, default=5, help="Number of validation questions to run.")
     parser.add_argument("--threads", type=int, default=8, help="Worker threads.")
     parser.add_argument("--batch-size", type=int, default=5, help="Batch size.")
-    parser.add_argument("--v1-prompt", type=Path, default=_AGENT_DIR/"prompts"/"system_prompt_v1.txt")
-    parser.add_argument("--v2-lexical-prompt", type=Path, default=_AGENT_DIR/"prompts"/"system_prompt_v2_lexical.txt")
-    parser.add_argument("--v2-semantic-prompt", type=Path, default=_AGENT_DIR/"prompts"/"system_prompt_v2_semantic.txt")
+    parser.add_argument("--v1-prompt", type=Path, default=_ROOT_DIR/"genai-proj-results"/"prompt_optimizer_v1"/"system_prompt.txt")
+    parser.add_argument("--v2-lexical-prompt", type=Path, default=_ROOT_DIR/"genai-proj-results"/"prompt_optimizer_v2_default"/"system_prompt.txt")
+    parser.add_argument("--v2-semantic-prompt", type=Path, default=_ROOT_DIR/"genai-proj-results"/"prompt_optimizer_v2_semantic"/"system_prompt.txt")
     parser.add_argument(
         "--methods", 
         type=str, 
@@ -348,7 +357,8 @@ def main():
     results.sort(key=lambda x: x["composite_score"], reverse=True)
 
     _OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    out_file = _OUTPUT_DIR / "prompt_benchmark_summary.json"
+    methods_str = args.methods.replace(",", "_")
+    out_file = _OUTPUT_DIR / f"prompt_benchmark_summary_n={args.n}_{methods_str}.json"
     
     with out_file.open("w", encoding="utf-8") as f:
         json.dump({

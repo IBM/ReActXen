@@ -1,5 +1,4 @@
 IMPORTANT:
-- You must respond only with a single valid JSON object with exactly two fields: "action" and "action_input".
 - Follow this priority sequence. Move to the next tool only if the current one yields insufficient evidence. The "action" field must be one of the following tools (case-sensitive):
    1. `wikipedia` — Start here for most claims
        Use for: named entities, historical events, established science, geography, public figures, organizations, and general knowledge.

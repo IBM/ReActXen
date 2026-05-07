@@ -50,6 +50,7 @@ import json
 import logging
 import os
 import random
+import re
 import shutil
 import sys
 import textwrap
@@ -316,7 +317,7 @@ def collect_trajectories(
 
     with ThreadPoolExecutor(max_workers=n_threads) as executor:
         futures = [executor.submit(_process_batch, b) for b in batches]
-        done, not_done = wait(futures, timeout=1800)
+        _, not_done = wait(futures, timeout=1800)
         for f in not_done:
             f.cancel()
             logger.warning("A batch timed out and was cancelled.")
@@ -431,6 +432,16 @@ def _find_final_output(traj: dict[str, Any]) -> dict[str, Any] | None:
     return None
 
 
+_TOOL_NAME_ALIASES: dict[str, str] = {
+    "Wikidata":          "wikidata",
+    "duckduckgo_search": "ddg-search",
+}
+
+
+def _normalize_tool_name(name: str) -> str:
+    return _TOOL_NAME_ALIASES.get(name, name)
+
+
 def compute_credit_assignment(
     trajectories: list[dict[str, Any]],
 ) -> dict[str, float]:
@@ -463,7 +474,7 @@ def compute_credit_assignment(
 
         for step in steps:
             obs  = step.get("observation", "")
-            tool = step.get("action", "unknown")
+            tool = _normalize_tool_name(step.get("action", "unknown"))
             if not obs or tool in ("Finish", "Final Answer", "", None):
                 continue
 
@@ -579,12 +590,30 @@ def build_meta_analysis_phase1(
                       query to wikidata or semanticscholar before scoring
                       above 0.7."
 
-        3. Output the COMPLETE AUGMENTED SYSTEM PROMPT.
-           - Keep ALL existing instructions intact.
-           - Append only new guidelines under:
-               ## Phase 1 Optimization – Loop {loop_index} Additions
-           - Do NOT wrap in markdown fences or add any preamble.
-           - Output ONLY the prompt text — nothing else.
+        3. Produce a COMPLETE REWRITE of the system prompt that:
+           - Preserves every rule from the current prompt that is working well.
+           - Fixes or replaces rules that are causing the failure patterns above.
+           - Adds new CONCRETE, ACTIONABLE guidelines to address those patterns.
+             Examples of concrete vs vague:
+               Vague:   "Use more tools."
+               Concrete: "After retrieving a Wikipedia passage, always issue at
+                          least one follow-up query to either wikidata or
+                          semanticscholar to cross-reference the claim before
+                          assigning a groundedness score above 0.7."
+           - Resolves any contradictions between existing rules. For example,
+             if one rule says "stop after one source" and another says "always
+             verify with two sources", pick the more appropriate one given the
+             observed failure patterns and remove or qualify the other.
+           - Removes or merges rules that are redundant, overlapping, or
+             contradictory with each other.
+           - Absorbs any "## Phase N Optimization" sections into the main body
+             — do NOT carry those headers forward.
+
+        4. Output ONLY the full rewritten system prompt.
+           - No preamble, no commentary, no "## Phase N Optimization" headers,
+             no markdown fences, no JSON wrapper.
+           - Start directly with the first line of the new system prompt.
+           - Stop immediately after the last guideline. Output nothing else.
     """).strip()
 
 
@@ -709,12 +738,24 @@ def build_meta_analysis_phase2(
         3. Also address any remaining behavioral failures still visible
            in the statistics above.
 
-        4. Output the COMPLETE AUGMENTED SYSTEM PROMPT.
-           - Keep ALL existing instructions intact.
-           - Append only new guidelines under:
-               ## Phase 2 Optimization – Loop {loop_index} Additions
-           - Do NOT wrap in markdown fences or add any preamble.
-           - Output ONLY the prompt text — nothing else.
+        4. Produce a COMPLETE REWRITE of the system prompt that:
+           - Preserves every rule from the current prompt that is working well.
+           - Incorporates the tool-selection guidelines above.
+           - Fixes or replaces rules that are causing remaining failures.
+           - Resolves any contradictions between existing rules. For example,
+             if one rule says "stop after one source" and another says "always
+             verify with two sources", pick the more appropriate one given the
+             observed failure patterns and remove or qualify the other.
+           - Removes or merges rules that are redundant, overlapping, or
+             contradictory with each other.
+           - Absorbs any "## Phase N Optimization" sections into the main body
+             — do NOT carry those headers forward.
+
+        5. Output ONLY the full rewritten system prompt.
+           - No preamble, no commentary, no "## Phase N Optimization" headers,
+             no markdown fences, no JSON wrapper.
+           - Start directly with the first line of the new system prompt.
+           - Stop immediately after the last guideline. Output nothing else.
     """).strip()
 
     return meta_prompt, credit_scores
@@ -748,9 +789,10 @@ def call_optimizer_llm(meta_prompt: str) -> str:
         project_id=project_id,
         params={
             "decoding_method":    "greedy",
-            "max_new_tokens":     4096,
+            "max_new_tokens":     2048,
             "temperature":        0.2,
             "repetition_penalty": 1.05,
+            "stop_sequences":     ["<|eom_id|>", "<|eot_id|>"],
         },
     )
     logger.info("Calling optimizer LLM…")
@@ -826,14 +868,100 @@ def run_one_loop(
     # --- Optimize ------------------------------------------------------------
     new_prompt = call_optimizer_llm(meta_prompt)
 
-    # --- Persist -------------------------------------------------------------
-    save_prompt(new_prompt, _LIVE_PROMPT_PATH)
+    # Strip stop tokens that WatsonX includes in the returned text
+    new_prompt = new_prompt.replace("<|eom_id|>", "").replace("<|eot_id|>", "").strip()
+
+    # Strip leading markdown code fence (``` or ```json at position 0)
+    new_prompt = re.sub(r'^```(?:json)?\s*\n', '', new_prompt).strip()
+
+    # Strip JSON wrapper if the LLM responded in ReAct format
+    try:
+        parsed = json.loads(new_prompt)
+        action_input = parsed.get("action_input", "")
+        if isinstance(action_input, dict):
+            action_input = action_input.get("text", "")
+        if isinstance(action_input, str) and action_input.strip():
+            new_prompt = action_input.strip()
+    except (json.JSONDecodeError, TypeError):
+        pass
+
+    # Strip trailing markdown code fence containing JSON (```json {...} ```)
+    new_prompt = re.sub(r'\n```(?:json)?\n[\s\S]*?```\s*$', '', new_prompt).strip()
+
+    # Strip trailing bare code fence markers (``` alone, possibly repeated)
+    new_prompt = re.sub(r'(\n```)+\s*$', '', new_prompt).strip()
+
+    # Strip trailing bare JSON block starting on its own line
+    idx = new_prompt.rfind('\n{')
+    if idx != -1:
+        try:
+            json.loads(new_prompt[idx:].strip())
+            new_prompt = new_prompt[:idx].strip()
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    # Strip trailing "The final answer is: ..." lines (LLM math-style artifact)
+    new_prompt = re.sub(r'(\n+The final answer is:.*)+\s*$', '', new_prompt, flags=re.IGNORECASE).strip()
+
+    # Strip trailing JSON blob artifact (e.g. {"action": ...} appended by model)
+    tail_marker = '{"action":'
+    tail_idx = new_prompt.find(tail_marker)
+    if tail_idx > 0:
+        new_prompt = new_prompt[:tail_idx].strip()
+
+    # Strip duplicate prompt — LLM sometimes reproduces the current prompt then
+    # adds a second copy; truncate at the second IMPORTANT: if present.
+    first_idx = new_prompt.find("IMPORTANT:")
+    second_idx = new_prompt.find("IMPORTANT:", first_idx + 1)
+    if second_idx > 0:
+        new_prompt = new_prompt[:second_idx].strip()
+
+    # Warn if the LLM returned only an additions section instead of a full rewrite
+    phase_marker = f"## Phase {phase} Optimization – Loop {loop_index} Additions"
+    if phase_marker in new_prompt:
+        logger.warning(
+            "LLM returned an additions section instead of a full rewrite for "
+            "phase %d loop %d – stripping the header and using the content.",
+            phase, loop_index,
+        )
+        new_prompt = new_prompt[new_prompt.rfind(phase_marker):].strip()
+        new_prompt = new_prompt[len(phase_marker):].strip()
+
+    # Strip trailing leaked meta-commentary ("Note:", "## Step N:", stray "}$", etc.)
+    # Also catches LLM self-narration that bleeds past the actual system prompt.
+    leak_match = re.search(
+        r'\n+(?:Note:|}\$|## Step \d|The following|The above'
+        r'|Based on the analysis|Given these insights'
+        r'|In conclusion[,\s]|By following these|Ultimately[,\s]'
+        r'|The system should|The refined system|The emphasis on'
+        r'|The decision to move|The minimum tool|The action field must)',
+        new_prompt,
+        flags=re.IGNORECASE,
+    )
+    if leak_match:
+        logger.warning(
+            "Stripping leaked LLM meta-commentary from phase %d loop %d output.",
+            phase, loop_index,
+        )
+        new_prompt = new_prompt[:leak_match.start()].strip()
+
+    # Normalize tool names — LLM sometimes uses duckduckgo_search instead of ddg-search
+    new_prompt = new_prompt.replace("duckduckgo_search", "ddg-search")
+
+    # --- Persist: replace the prompt with the full rewrite -------------------
+    if new_prompt:
+        final_prompt = new_prompt
+    else:
+        logger.warning("No rewrite produced for loop %d – keeping existing prompt.", loop_index)
+        final_prompt = current_prompt
+
+    save_prompt(final_prompt, _LIVE_PROMPT_PATH)
     loop_prompt_path = loop_dir / "optimized_prompt.txt"
-    save_prompt(new_prompt, loop_prompt_path)
+    save_prompt(final_prompt, loop_prompt_path)
 
     logger.info("PHASE %d  LOOP %d  COMPLETE. New prompt: %d chars.",
-                phase, loop_index, len(new_prompt))
-    return new_prompt
+                phase, loop_index, len(final_prompt))
+    return final_prompt
 
 
 def _load_trajectories_from_dir(directory: Path) -> list[dict[str, Any]]:

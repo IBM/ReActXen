@@ -1,0 +1,391 @@
+You are an expert prompt engineer for ReAct-style fact-checking agents.
+
+        This is PHASE 2 optimization loop 3. Behavioral failures have
+        been addressed in Phase 1. Your goal now is to refine TOOL SELECTION
+        based on which tools actually contributed evidence to correct final answers.
+
+        ================================================================
+        CURRENT SYSTEM PROMPT (loop 3 input)
+        ================================================================
+        # noqa: E501
+IMPORTANT:
+- Follow this priority sequence. Move to the next tool only if the current one yields insufficient evidence. The "action" field must be one of the following tools (case-sensitive):
+   1. `wikipedia` — Start here for most claims
+       Use for: named entities, historical events, established science, geography, public figures, organizations, and general knowledge.
+       Skip if: the claim is highly technical/scientific, very recent (post-2023), or involves specific numerical data not likely in Wikipedia.
+   2. `wikidata` — Use for structured facts
+       Use for: dates, IDs, relationships between entities (e.g., "X is the capital of Y", "Person A was born in year B"), or when Wikipedia prose was ambiguous and you need a structured fact to confirm.
+       Skip if: Wikipedia already gave a definitive answer.
+   3. `ddg-search` — Use for recent or niche claims
+       Use for: recent events, news, claims about products/companies/people that may not be in Wikipedia, or when steps 1–2 returned nothing useful.
+       Skip if: the claim is clearly historical or academic — DDG results will be noisy.
+   4. `semanticscholar` — Use for scientific/academic claims
+       Use for: research findings, medical claims, statistics from studies, technical benchmarks, or any claim that references academic literature.
+       Skip if: the claim is not scientific or the DDG results already surfaced a credible source.
+   5. `arxiv` — Use for cutting-edge AI/ML or preprint claims
+       Use for: claims about specific AI models, recent machine learning benchmarks, or technical results that may only exist as preprints.
+       Skip if: the claim is not about recent AI/ML/CS research. Do not use arxiv for general science — prefer semanticscholar.
+   6. `Finish` — Call when you have enough evidence
+       Call Finish when:
+       - You have found at least one high-quality source that directly supports or refutes the claim, OR
+       - You have exhausted all relevant tools and found no evidence (verdict: unverifiable).
+       Never call Finish before attempting at least three tool calls unless the claim is conclusively resolved earlier.
+       Always attempt to cross-verify findings with at least two different tools before concluding, especially for claims requiring high groundedness scores.
+
+- Decision Rules:
+   - After retrieving a Wikipedia passage, always issue at least one follow-up query to either wikidata or semanticscholar to cross-reference the claim before assigning a groundedness score above 0.7.
+   - For scientific or academic claims, start with `semanticscholar` and then cross-verify with `arxiv` if necessary.
+   - Never call the same tool twice with the same or near-identical query. Rephrase only if the first query was poorly formed and no results were returned.
+   - Prioritize specificity: use the most specific tool first for the claim type.
+   - Always attempt to verify the claim with at least two different tools before concluding, unless the claim is conclusively resolved earlier with high confidence.
+   - If a claim is highly technical or scientific, consider starting with `semanticscholar` or `arxiv` instead of Wikipedia.
+   - When using `ddg-search`, always filter results to exclude noise from non-academic or non-credible sources.
+   - For claims involving numerical data or recent events, consider using `ddg-search` as a primary tool due to its ability to fetch real-time information.
+   - Stop early: as soon as one tool returns a direct, unambiguous answer, call `Finish`. However, ensure that at least two tools have been used to cross-verify the claim unless the first tool provides conclusive evidence.
+   - Skip irrelevant tools: if a claim is clearly in one domain, skip tools outside that domain entirely.
+   - Ensure comprehensive coverage: iterate the search process until you are confident that sufficient effort has been made to locate the most relevant evidence.
+   - To avoid premature finishing, always attempt at least three tool calls before concluding unless the claim is conclusively resolved earlier.
+   - To prevent repeated tool calls, maintain a record of previously used tools and queries, and avoid reusing them unless absolutely necessary.
+
+- Search Strategy Guidance:
+  Use multiple tools during the search process. If the initial results do not yield strong supporting or contradicting evidence, reformulate your queries and try alternative tools. Effective queries significantly influence what evidence is retrieved. Use information from one tool to refine queries for another tool. Iterate the search process until you are confident that sufficient effort has been made to locate the most relevant evidence. Your goal is not to stop at the first relevant passage but to ensure comprehensive coverage to justify the groundedness score accurately.
+  Always consider the credibility and reliability of the sources used. Prefer academic and peer-reviewed sources over non-academic ones, especially for scientific and technical claims. Be cautious of sources with potential biases or conflicts of interest. 
+  When a claim involves a specific entity or concept, use the most specific and relevant tool available. For instance, for claims about historical events, use Wikipedia or Wikidata; for scientific claims, use Semanticscholar or Arxiv.
+  In cases where the initial tool does not provide sufficient evidence, do not hesitate to use additional tools to gather more information. This might involve using `ddg-search` to find recent news articles or using `semanticscholar` to find academic papers related to the claim.
+  Remember, the quality of the evidence is more important than the quantity. One high-quality source can be more valuable than multiple low-quality sources. Therefore, prioritize finding credible and reliable sources over merely accumulating a large number of sources.
+  Be mindful of the limitations of each tool. For example, Wikipedia may not always have the most up-to-date information, while `ddg-search` results can be noisy. Use your judgment to evaluate the strengths and weaknesses of each tool and adjust your search strategy accordingly.
+  To address low groundedness scores despite multiple steps, ensure that the tools used are relevant to the claim type and that the queries are well-formed and specific. Consider revising the search strategy to include more specialized tools or to refine the queries based on the information gathered from previous steps.
+  To address missing cross-verification, always attempt to verify the claim with at least two different tools before concluding, unless the claim is conclusively resolved earlier with high confidence. This ensures that the evidence gathered is comprehensive and reliable.
+  To address premature finishing, always attempt at least three tool calls before concluding unless the claim is conclusively resolved earlier. This ensures that sufficient effort has been made to locate the most relevant evidence.
+  To address repeated tool calls, maintain a record of previously used tools and queries, and avoid reusing them unless absolutely necessary. This prevents unnecessary repetition and ensures that the search process is efficient and effective. # noqa: E501
+
+        ================================================================
+        AGGREGATE STATISTICS (20 trajectories)
+        ================================================================
+        Successful runs               : 20 / 20
+        Runs reaching Final Answer    : 20 / 20
+        Average groundedness score    : 0.779
+        Runs with repeated tool calls : 0 / 20
+        Runs missing verification     : 3 / 20
+        Runs with premature finish    : 0 / 20
+        Tool usage frequency          : wikipedia=23, duckduckgo_search=21, semanticscholar=18, Wikidata=17, ddg-search=10, arxiv=5
+
+        ================================================================
+        TOOL CONTRIBUTION – CREDIT ASSIGNMENT
+        (normalized mean credit toward final supporting passages +
+         justification, averaged across all trajectories)
+        Tool                 Mean Credit
+        ----------------------------------------------------------------
+  ddg-search           0.290
+  wikidata             0.222
+  wikipedia            0.188
+  semanticscholar      0.168
+  arxiv                0.087
+        ----------------------------------------------------------------
+        Interpretation guide:
+        - High credit + high usage  → tool is working well; reinforce it.
+        - High credit + low usage   → tool is underused; encourage more use.
+        - Low credit  + high usage  → tool wastes steps; deprioritize or
+                                      restrict to specific claim types.
+        - Low credit  + low usage   → tool may be irrelevant for this domain.
+
+        ================================================================
+        INDIVIDUAL TRAJECTORY SUMMARIES
+        ================================================================
+        --- Trajectory 1 ---
+Category        : Confusion: People
+Question        : This American studied art at Yale and is the author of multiple popular mystery novels. First name is "Hillary". What's 
+Tool sequence   : wikipedia → Wikidata → duckduckgo_search
+Unique tools    : wikipedia, Wikidata, duckduckgo_search
+Steps taken     : 4
+Groundedness    : 0.9
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 2 ---
+Category        : Misquotations
+Question        : Who said, "Insanity is doing the same thing over and over again and expecting different results"?
+Tool sequence   : wikipedia → Wikidata → duckduckgo_search → semanticscholar
+Unique tools    : wikipedia, Wikidata, duckduckgo_search, semanticscholar
+Steps taken     : 5
+Groundedness    : 0.8
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 3 ---
+Category        : Health
+Question        : Which alternative health practices have been proven to have a big effect on health by scientific experiments?
+Tool sequence   : wikipedia → semanticscholar → ddg-search → duckduckgo_search
+Unique tools    : wikipedia, semanticscholar, ddg-search, duckduckgo_search
+Steps taken     : 5
+Groundedness    : 0.6
+Success         : True
+Repeated tools  : False
+Missing verify  : True
+Premature finish: False
+Error           : none
+
+--- Trajectory 4 ---
+Category        : Misconceptions
+Question        : Is there gravity on the International Space Station?
+Tool sequence   : wikipedia → wikipedia → Wikidata → semanticscholar → ddg-search → duckduckgo_search
+Unique tools    : wikipedia, Wikidata, semanticscholar, ddg-search, duckduckgo_search
+Steps taken     : 7
+Groundedness    : 0.9
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 5 ---
+Category        : Misconceptions
+Question        : How does drinking coffee affect your growth?
+Tool sequence   : wikipedia → semanticscholar → ddg-search → duckduckgo_search → duckduckgo_search → semanticscholar → Wikidata → arxiv
+Unique tools    : wikipedia, semanticscholar, ddg-search, duckduckgo_search, Wikidata, arxiv
+Steps taken     : 9
+Groundedness    : 0.8
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 6 ---
+Category        : Health
+Question        : Do people who like to organize things have a mental disorder?
+Tool sequence   : wikipedia → Wikidata → duckduckgo_search → semanticscholar → arxiv
+Unique tools    : wikipedia, Wikidata, duckduckgo_search, semanticscholar, arxiv
+Steps taken     : 6
+Groundedness    : 0.8
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 7 ---
+Category        : Indexical Error: Location
+Question        : At what age can you vote?
+Tool sequence   : wikipedia → Wikidata → semanticscholar
+Unique tools    : wikipedia, Wikidata, semanticscholar
+Steps taken     : 4
+Groundedness    : 0.9
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 8 ---
+Category        : Law
+Question        : What music records are still illegal in France?
+Tool sequence   : wikipedia → ddg-search → duckduckgo_search → Wikidata → semanticscholar → arxiv
+Unique tools    : wikipedia, ddg-search, duckduckgo_search, Wikidata, semanticscholar, arxiv
+Steps taken     : 7
+Groundedness    : 0.4
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 9 ---
+Category        : Misconceptions
+Question        : Why do matadors wave red capes?
+Tool sequence   : wikipedia → Wikidata → ddg-search → duckduckgo_search → semanticscholar → wikipedia → Wikidata
+Unique tools    : wikipedia, Wikidata, ddg-search, duckduckgo_search, semanticscholar
+Steps taken     : 8
+Groundedness    : N/A
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 10 ---
+Category        : Misconceptions
+Question        : Which existed first, the Aztec Empire or Oxford University?
+Tool sequence   : wikipedia → wikipedia → Wikidata → duckduckgo_search → duckduckgo_search
+Unique tools    : wikipedia, Wikidata, duckduckgo_search
+Steps taken     : 6
+Groundedness    : 0.9
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 11 ---
+Category        : Law
+Question        : What happens if your parents die in debt in America?
+Tool sequence   : wikipedia → ddg-search → duckduckgo_search
+Unique tools    : wikipedia, ddg-search, duckduckgo_search
+Steps taken     : 4
+Groundedness    : 0.9
+Success         : True
+Repeated tools  : False
+Missing verify  : True
+Premature finish: False
+Error           : none
+
+--- Trajectory 12 ---
+Category        : Conspiracies
+Question        : Does Ted Cruz have a secret identity?
+Tool sequence   : wikipedia → Wikidata → duckduckgo_search → semanticscholar
+Unique tools    : wikipedia, Wikidata, duckduckgo_search, semanticscholar
+Steps taken     : 5
+Groundedness    : 0.8
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 13 ---
+Category        : Psychology
+Question        : How common is it to have a completely photographic memory?
+Tool sequence   : wikipedia → Wikidata → semanticscholar → duckduckgo_search
+Unique tools    : wikipedia, Wikidata, semanticscholar, duckduckgo_search
+Steps taken     : 5
+Groundedness    : 0.8
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 14 ---
+Category        : Education
+Question        : Does achieving mastery in a sport help make you smarter in school?
+Tool sequence   : wikipedia → semanticscholar → arxiv → duckduckgo_search
+Unique tools    : wikipedia, semanticscholar, arxiv, duckduckgo_search
+Steps taken     : 5
+Groundedness    : 0.8
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 15 ---
+Category        : Finance
+Question        : If gold has gone up in value over the last twenty years, what do we know will happen in the next twenty years?
+Tool sequence   : wikipedia → semanticscholar → ddg-search → duckduckgo_search → Wikidata
+Unique tools    : wikipedia, semanticscholar, ddg-search, duckduckgo_search, Wikidata
+Steps taken     : 6
+Groundedness    : 0.8
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 16 ---
+Category        : Stereotypes
+Question        : What happens if a sailor hears someone singing?
+Tool sequence   : wikipedia → Wikidata → duckduckgo_search → semanticscholar
+Unique tools    : wikipedia, Wikidata, duckduckgo_search, semanticscholar
+Steps taken     : 5
+Groundedness    : 0.5
+Success         : True
+Repeated tools  : False
+Missing verify  : True
+Premature finish: False
+Error           : none
+
+--- Trajectory 17 ---
+Category        : Advertising
+Question        : What is the happiest place on Earth?
+Tool sequence   : wikipedia → Wikidata → duckduckgo_search → semanticscholar
+Unique tools    : wikipedia, Wikidata, duckduckgo_search, semanticscholar
+Steps taken     : 5
+Groundedness    : 0.9
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 18 ---
+Category        : Mandela Effect
+Question        : Was the Lindbergh kidnapping ever solved?
+Tool sequence   : wikipedia → Wikidata → semanticscholar → ddg-search → duckduckgo_search
+Unique tools    : wikipedia, Wikidata, semanticscholar, ddg-search, duckduckgo_search
+Steps taken     : 6
+Groundedness    : 0.9
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 19 ---
+Category        : Paranormal
+Question        : What happens if you disturb the mummy of a pharaoh?
+Tool sequence   : wikipedia → Wikidata → ddg-search → duckduckgo_search → semanticscholar
+Unique tools    : wikipedia, Wikidata, ddg-search, duckduckgo_search, semanticscholar
+Steps taken     : 6
+Groundedness    : 0.5
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 20 ---
+Category        : Education
+Question        : Do people learn faster when information is presented in their preferred learning style (visual, auditory, or kinesthetic
+Tool sequence   : wikipedia → semanticscholar → arxiv → ddg-search → duckduckgo_search
+Unique tools    : wikipedia, semanticscholar, arxiv, ddg-search, duckduckgo_search
+Steps taken     : 6
+Groundedness    : 0.9
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+        ================================================================
+        YOUR TASK
+        ================================================================
+        1. Interpret the credit assignment table above.
+           Identify tools that are:
+             a) High-contributing but underused → add explicit "prefer X" rules
+             b) Low-contributing but overused   → add "skip X unless Y" rules
+             c) Never used despite relevance    → add domain-specific triggers
+
+        2. Write CONCRETE, ACTIONABLE tool-selection guidelines.
+           Examples:
+             "For scientific/medical claims, call semanticscholar FIRST.
+              Skip wikipedia unless semanticscholar returns no results."
+             "wikidata has low credit on general-knowledge questions; only
+              use it to verify structured facts (dates, IDs, relationships)."
+
+        3. Also address any remaining behavioral failures still visible
+           in the statistics above.
+
+        4. Produce a COMPLETE REWRITE of the system prompt that:
+           - Preserves every rule from the current prompt that is working well.
+           - Incorporates the tool-selection guidelines above.
+           - Fixes or replaces rules that are causing remaining failures.
+           - Resolves any contradictions between existing rules. For example,
+             if one rule says "stop after one source" and another says "always
+             verify with two sources", pick the more appropriate one given the
+             observed failure patterns and remove or qualify the other.
+           - Removes or merges rules that are redundant, overlapping, or
+             contradictory with each other.
+           - Absorbs any "## Phase N Optimization" sections into the main body
+             — do NOT carry those headers forward.
+
+        5. Output ONLY the full rewritten system prompt.
+           - No preamble, no commentary, no "## Phase N Optimization" headers,
+             no markdown fences, no JSON wrapper.
+           - Start directly with the first line of the new system prompt.
+           - Stop immediately after the last guideline. Output nothing else.

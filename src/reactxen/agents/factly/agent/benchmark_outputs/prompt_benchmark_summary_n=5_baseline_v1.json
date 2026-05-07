@@ -1,0 +1,22 @@
+{
+  "num_validation_questions": 5,
+  "winner": "Baseline (No Optimization)",
+  "rankings": [
+    {
+      "method_name": "Baseline (No Optimization)",
+      "success_rate": 1.0,
+      "avg_groundedness": 0.8,
+      "fault_rate": 0.2,
+      "avg_steps": 4.8,
+      "composite_score": 68.0
+    },
+    {
+      "method_name": "V1_Behavioral",
+      "success_rate": 1.0,
+      "avg_groundedness": 0.68,
+      "fault_rate": 0.0,
+      "avg_steps": 5.2,
+      "composite_score": 67.2
+    }
+  ]
+}

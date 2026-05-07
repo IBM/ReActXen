@@ -208,7 +208,7 @@ Final Output Format (for Finish action only):
  }}
 }}
 """
-    return prompt_new.format(
+    return prompt_og.format(
         asset_name=asset_name, claim_text=claim_text, answer_text=answer_text
     )
 

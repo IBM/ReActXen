@@ -56,9 +56,7 @@ if os.path.exists(results_file):
 react_example = ""
 
 
-# Generate prompt with .format() and escaped braces for JSON examples
-def generate_groundedness_check_prompt(asset_name, claim_text, answer_text):
-    prompt_og = """Task: Fact-Check an LLM-Generated Answer to a Multiple-Choice Question about General Factual Knowledge.
+PROMPT_OG = """Task: Fact-Check an LLM-Generated Answer to a Multiple-Choice Question about General Factual Knowledge.
 
 Objective: Determine whether the LLM-generated answer is factually grounded by identifying relevant supporting or contradicting evidence from trusted technical or scientific sources.
 
@@ -122,6 +120,9 @@ Final Output Format (for Finish action only):
   }}
 }}
 """
+
+# Generate prompt with .format() and escaped braces for JSON examples
+def generate_groundedness_check_prompt(asset_name, claim_text, answer_text):
     prompt_new = """Task: Fact-Check an LLM-Generated Answer to a Multiple-Choice Question about General Factual Knowledge.
 
 Objective: Determine whether the LLM-generated answer is factually grounded by identifying relevant supporting or contradicting evidence from trusted technical or scientific sources.
@@ -208,7 +209,7 @@ Final Output Format (for Finish action only):
  }}
 }}
 """
-    return prompt_og.format(
+    return PROMPT_OG.format(
         asset_name=asset_name, claim_text=claim_text, answer_text=answer_text
     )
 

@@ -38,7 +38,7 @@ from reactxen.utils.model_inference import watsonx_llm
 
 _ROOT_DIR = _FACTLY_DIR.parents[3]
 
-v2_semantic_path = _ROOT_DIR / "genai-proj-results" / "n=5" / "prompt_optimizer_v2_semantic" / "system_prompt.txt"
+v2_semantic_path = _ROOT_DIR / "genai-proj-results" / "prompt_optimizer_v2_semantic" / "system_prompt.txt"
 if v2_semantic_path.exists():
     BEST_PROMPT_TEMPLATE = v2_semantic_path.read_text(encoding="utf-8")
 else:
@@ -46,6 +46,120 @@ else:
 
 # Keep Worst as empty so it defaults to the unoptimized baseline task_prompt
 WORST_PROMPT_TEMPLATE = ""
+
+# =====================================================================
+# Benchmark Helper Functions
+# =====================================================================
+
+BENCHMARK_SUMMARY_PATH = str(_AGENT_DIR / "benchmark_outputs" / "prompt_benchmark_summary.json")
+
+@st.cache_data
+def load_benchmark_summary(path: str) -> dict:
+    try:
+        p = Path(path)
+        if not p.exists():
+            alt_path = Path(path.replace("summary.json", "summery.json"))
+            if alt_path.exists():
+                p = alt_path
+            else:
+                st.warning(f"Benchmark summary file not found at {path}. Live execution will still work.")
+                return {}
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception as e:
+        st.warning(f"Error loading benchmark JSON: {e}")
+        return {}
+
+def find_best_worst_prompt_records(summary: dict) -> tuple[dict | None, dict | None]:
+    if not summary:
+        return None, None
+        
+    best = None
+    worst = None
+    
+    # Format 1: Explicit best/worst
+    if "best_prompt" in summary and "worst_prompt" in summary:
+        best = summary["best_prompt"]
+        worst = summary["worst_prompt"]
+        return best, worst
+        
+    # Format 2: Rankings list
+    if "rankings" in summary and isinstance(summary["rankings"], list) and len(summary["rankings"]) > 0:
+        best = summary["rankings"][0]
+        worst = summary["rankings"][-1]
+        return best, worst
+        
+    # Format 3: Prompts dict (infer from max/min score)
+    if "prompts" in summary and isinstance(summary["prompts"], dict) and len(summary["prompts"]) > 0:
+        prompts = summary["prompts"]
+        score_keys = ["composite_score", "score", "overall_score", "success_rate"]
+        best_score = -float('inf')
+        worst_score = float('inf')
+        
+        for p_name, p_data in prompts.items():
+            if not isinstance(p_data, dict):
+                continue
+            
+            p_score = 0
+            for sk in score_keys:
+                if sk in p_data and isinstance(p_data[sk], (int, float)):
+                    p_score = p_data[sk]
+                    break
+                    
+            if p_score > best_score:
+                best_score = p_score
+                best = p_data
+                best["_inferred_name"] = p_name
+            if p_score < worst_score:
+                worst_score = p_score
+                worst = p_data
+                worst["_inferred_name"] = p_name
+                
+    return best, worst
+
+def get_numeric_comparison(best: dict | None, worst: dict | None) -> pd.DataFrame:
+    if not best or not worst:
+        return pd.DataFrame()
+        
+    rows = []
+    for k, v_best in best.items():
+        if isinstance(v_best, (int, float)):
+            v_worst = worst.get(k)
+            if isinstance(v_worst, (int, float)):
+                diff = v_best - v_worst
+                rows.append({
+                    "Metric": k,
+                    "Best Prompt": v_best,
+                    "Worst Prompt": v_worst,
+                    "Difference": round(diff, 4)
+                })
+    return pd.DataFrame(rows)
+
+def render_prompt_benchmark_card(title: str, record: dict | None) -> None:
+    st.subheader(title)
+    if not record:
+        st.info("No benchmark data found.")
+        return
+        
+    for k, v in record.items():
+        if k == "method_name" or k == "_inferred_name":
+            st.markdown(f"**Name:** `{v}`")
+        elif isinstance(v, (int, float)):
+            st.markdown(f"**{k}:** `{v}`")
+        elif isinstance(v, str):
+            if len(v) > 100:
+                with st.expander(f"{k} (Click to expand)"):
+                    st.text(v)
+            else:
+                st.markdown(f"**{k}:** {v}")
+        else:
+            st.markdown(f"**{k}:** {v}")
+
+def render_benchmark_comparison(best_record: dict | None, worst_record: dict | None) -> None:
+    df = get_numeric_comparison(best_record, worst_record)
+    if not df.empty:
+        st.dataframe(df, use_container_width=True)
+    else:
+        st.info("No numeric comparison data available.")
 
 # =====================================================================
 # Helper Functions
@@ -250,12 +364,23 @@ def run_checker_with_prompt(question_row: pd.Series, prompt_template: str, label
 def main():
     st.set_page_config(page_title="Factly Prompt Comparison Demo", layout="wide")
     
+    benchmark_path = BENCHMARK_SUMMARY_PATH
+    
     st.title("Factly Prompt Comparison Demo")
     st.markdown("""
         This interactive demo allows you to run two different system prompts side-by-side 
         on the exact same question. The goal is to visually compare how the agent reasons 
         through the problem, which tools it selects, and how the final groundedness scores differ.
     """)
+    
+    # --- Benchmark Summary Rendering ---
+    summary_data = load_benchmark_summary(benchmark_path)
+    best_record, worst_record = find_best_worst_prompt_records(summary_data)
+        
+    st.subheader("Best vs Worst Benchmark Comparison")
+    render_benchmark_comparison(best_record, worst_record)
+            
+    st.divider()
     
     csv_path = str(_FACTLY_DIR / "data" / "TruthfulQA.csv")
     df = load_truthfulqa(csv_path)
@@ -301,6 +426,13 @@ def main():
             
             with col1:
                 st.header("🏆 Best Prompt")
+                if best_record:
+                    b_name = best_record.get("method_name", best_record.get("_inferred_name", "Unknown"))
+                    b_score = best_record.get("composite_score", best_record.get("score", "N/A"))
+                    st.caption(f"**Method:** {b_name} | **Score:** {b_score}")
+                else:
+                    st.caption("Benchmark metadata not found for this prompt.")
+                    
                 st.markdown("#### Terminal Trace")
                 st.code(best_results["trace"], language="text")
                 st.markdown("#### Final Answer Output")
@@ -311,6 +443,13 @@ def main():
                     
             with col2:
                 st.header("📉 Worst Prompt")
+                if worst_record:
+                    w_name = worst_record.get("method_name", worst_record.get("_inferred_name", "Unknown"))
+                    w_score = worst_record.get("composite_score", worst_record.get("score", "N/A"))
+                    st.caption(f"**Method:** {w_name} | **Score:** {w_score}")
+                else:
+                    st.caption("Benchmark metadata not found for this prompt.")
+                    
                 st.markdown("#### Terminal Trace")
                 st.code(worst_results["trace"], language="text")
                 st.markdown("#### Final Answer Output")

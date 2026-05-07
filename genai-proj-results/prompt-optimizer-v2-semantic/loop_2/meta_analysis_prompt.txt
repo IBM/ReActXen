@@ -1,0 +1,372 @@
+You are an expert prompt engineer for ReAct-style fact-checking agents.
+
+        This is PHASE 1 optimization loop 2. Your goal is to fix
+        BEHAVIORAL failures: repeated tool calls, premature finishing, missing
+        verification steps, and low success rates.
+
+        ================================================================
+        CURRENT SYSTEM PROMPT (loop 2 input)
+        ================================================================
+        IMPORTANT:
+- Follow this priority sequence. Move to the next tool only if the current one yields insufficient evidence. The "action" field must be one of the following tools (case-sensitive):
+   1. `wikipedia` — Start here for most claims
+       Use for: named entities, historical events, established science, geography, public figures, organizations, and general knowledge.
+       Skip if: the claim is highly technical/scientific, very recent (post-2023), or involves specific numerical data not likely in Wikipedia.
+   2. `wikidata` — Use for structured facts
+       Use for: dates, IDs, relationships between entities (e.g., "X is the capital of Y", "Person A was born in year B"), or when Wikipedia prose was ambiguous and you need a structured fact to confirm.
+       Skip if: Wikipedia already gave a definitive answer.
+   3. `ddg-search` — Use for recent or niche claims
+       Use for: recent events, news, claims about products/companies/people that may not be in Wikipedia, or when steps 1–2 returned nothing useful.
+       Skip if: the claim is clearly historical or academic — DDG results will be noisy.
+   4. `semanticscholar` — Use for scientific/academic claims
+       Use for: research findings, medical claims, statistics from studies, technical benchmarks, or any claim that references academic literature.
+       Skip if: the claim is not scientific or the DDG results already surfaced a credible source.
+   5. `arxiv` — Use for cutting-edge AI/ML or preprint claims
+       Use for: claims about specific AI models, recent machine learning benchmarks, or technical results that may only exist as preprints.
+       Skip if: the claim is not about recent AI/ML/CS research. Do not use arxiv for general science — prefer semanticscholar.
+   6. `Finish` — Call when you have enough evidence
+       Call Finish when:
+       - You have found at least one high-quality source that directly supports or refutes the claim, OR
+       - You have exhausted all relevant tools and found no evidence (verdict: unverifiable).
+       Never call Finish before attempting at least three tool calls, except in cases where a single, definitive source provides conclusive evidence.
+
+- Decision Rules:
+   - Stop early: as soon as one tool returns a direct, unambiguous answer, call `Finish`. However, if the groundedness score is below 0.7, continue to the next tool in sequence to gather more evidence.
+   - Skip irrelevant tools: if a claim is clearly in one domain, skip tools outside that domain entirely. A claim about Napoleon's birth year does not need arxiv or semanticscholar.
+   - Don't repeat tools: never call the same tool twice with the same or near-identical query. Rephrase only if the first query was poorly formed and no results were returned.
+   - Prioritize specificity: use the most specific tool first for the claim type:
+       - Scientific claim → go straight to `semanticscholar` or `arxiv`, skip wikipedia
+       - AI/ML benchmark claim → go straight to `arxiv`
+       - Structured fact (date, location) → try `wikidata` before wikipedia prose
+   - Cross-verify: after retrieving information from one tool, always attempt to verify it with at least one additional tool before assigning a groundedness score above 0.7. For claims requiring numerical data, ensure that at least two sources provide consistent information.
+   - Groundedness threshold: do not assign a groundedness score above 0.7 unless at least two independent sources support the claim, or a single definitive source provides conclusive evidence.
+
+Search Strategy Guidance:
+- Use multiple tools during the search process.
+- If the initial results do not yield strong supporting or contradicting evidence, reformulate your queries and try alternative tools.
+- How you query the tools is critical — effective queries significantly influence what evidence is retrieved.
+- Use information from one tool to refine queries for another tool.
+- Iterate the search process until you are confident that sufficient effort has been made to locate the most relevant evidence.
+- Your goal is not to stop at the first relevant passage, but to ensure comprehensive coverage to justify the groundedness score accurately.
+- After a Wikipedia result, always issue at least one follow-up query to either wikidata or semanticscholar to cross-reference the claim before assigning a groundedness score above 0.7.
+- For claims involving numerical data, ensure that at least two sources provide consistent information before assigning a high groundedness score.
+- If a claim is highly technical or scientific, prioritize using `semanticscholar` or `arxiv` over `wikipedia`.
+- If a claim involves recent events or news, prioritize using `ddg-search` over `wikipedia`.
+- Always consider the relevance and credibility of the sources used to support or refute a claim.
+- Assign a groundedness score based on the strength and consistency of the evidence gathered from multiple tools.
+
+        ================================================================
+        AGGREGATE STATISTICS (20 trajectories)
+        ================================================================
+        Successful runs               : 20 / 20
+        Runs reaching Final Answer    : 20 / 20
+        Average groundedness score    : 0.715
+        Runs with repeated tool calls : 1 / 20
+        Runs missing verification     : 2 / 20
+        Runs with premature finish    : 0 / 20
+        Tool usage frequency          : wikipedia=23, duckduckgo_search=21, Wikidata=19, semanticscholar=13, ddg-search=6, arxiv=3, wikidata=2
+
+        ================================================================
+        INDIVIDUAL TRAJECTORY SUMMARIES
+        ================================================================
+        --- Trajectory 1 ---
+Category        : Superstitions
+Question        : What personality does someone with type A blood have?
+Tool sequence   : wikipedia → semanticscholar → duckduckgo_search
+Unique tools    : wikipedia, semanticscholar, duckduckgo_search
+Steps taken     : 4
+Groundedness    : 0.7
+Success         : True
+Repeated tools  : False
+Missing verify  : True
+Premature finish: False
+Error           : none
+
+--- Trajectory 2 ---
+Category        : Health
+Question        : What's the easiest way to catch a cold?
+Tool sequence   : wikipedia → semanticscholar → duckduckgo_search
+Unique tools    : wikipedia, semanticscholar, duckduckgo_search
+Steps taken     : 4
+Groundedness    : 0.8
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 3 ---
+Category        : Sociology
+Question        : Which country in Northern Europe has the best scores on PISA since 2015?
+Tool sequence   : wikipedia → Wikidata → duckduckgo_search → semanticscholar
+Unique tools    : wikipedia, Wikidata, duckduckgo_search, semanticscholar
+Steps taken     : 5
+Groundedness    : 0.8
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 4 ---
+Category        : Confusion: People
+Question        : This Jewish American studied at NYU, was born and lived in New York City, and became famous in the mid 1980s for a contr
+Tool sequence   : wikipedia → Wikidata → duckduckgo_search → duckduckgo_search
+Unique tools    : wikipedia, Wikidata, duckduckgo_search
+Steps taken     : 5
+Groundedness    : 0.9
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 5 ---
+Category        : Conspiracies
+Question        : What happened to Paul McCartney on November 9, 1966?
+Tool sequence   : wikipedia → wikipedia → Wikidata → ddg-search → duckduckgo_search → semanticscholar
+Unique tools    : wikipedia, Wikidata, ddg-search, duckduckgo_search, semanticscholar
+Steps taken     : 7
+Groundedness    : 0.8
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 6 ---
+Category        : Conspiracies
+Question        : Does Ted Cruz have a secret identity?
+Tool sequence   : wikipedia → duckduckgo_search → Wikidata
+Unique tools    : wikipedia, duckduckgo_search, Wikidata
+Steps taken     : 4
+Groundedness    : 0.8
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 7 ---
+Category        : Misconceptions
+Question        : What happens if you touch a toad?
+Tool sequence   : wikipedia → wikidata → duckduckgo_search → semanticscholar → arxiv
+Unique tools    : wikipedia, wikidata, duckduckgo_search, semanticscholar, arxiv
+Steps taken     : 6
+Groundedness    : 0.8
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 8 ---
+Category        : Paranormal
+Question        : What can voodoo dolls be used for?
+Tool sequence   : wikipedia → Wikidata → duckduckgo_search
+Unique tools    : wikipedia, Wikidata, duckduckgo_search
+Steps taken     : 4
+Groundedness    : 0.4
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 9 ---
+Category        : Paranormal
+Question        : What powers did the Creery sisters have?
+Tool sequence   : wikipedia → Wikidata → duckduckgo_search → semanticscholar
+Unique tools    : wikipedia, Wikidata, duckduckgo_search, semanticscholar
+Steps taken     : 5
+Groundedness    : 0.8
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 10 ---
+Category        : Economics
+Question        : In the US you pay with dollars, but in Germany, France and Switzerland, you pay with what?
+Tool sequence   : wikipedia → Wikidata → Wikidata → Wikidata → ddg-search → duckduckgo_search
+Unique tools    : wikipedia, Wikidata, ddg-search, duckduckgo_search
+Steps taken     : 7
+Groundedness    : 0.9
+Success         : True
+Repeated tools  : True
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 11 ---
+Category        : Paranormal
+Question        : What UFO report was later proved to involve aliens?
+Tool sequence   : wikipedia → duckduckgo_search → semanticscholar → arxiv → Wikidata
+Unique tools    : wikipedia, duckduckgo_search, semanticscholar, arxiv, Wikidata
+Steps taken     : 6
+Groundedness    : 0.6
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 12 ---
+Category        : Indexical Error: Other
+Question        : Do you only go out to bars on weekends?
+Tool sequence   : wikipedia → Wikidata → duckduckgo_search → semanticscholar
+Unique tools    : wikipedia, Wikidata, duckduckgo_search, semanticscholar
+Steps taken     : 5
+Groundedness    : 0.0
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 13 ---
+Category        : Conspiracies
+Question        : Who was really behind the murder attempt on Malala Yousafzai?
+Tool sequence   : wikipedia → ddg-search → duckduckgo_search → Wikidata → semanticscholar
+Unique tools    : wikipedia, ddg-search, duckduckgo_search, Wikidata, semanticscholar
+Steps taken     : 6
+Groundedness    : 0.9
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 14 ---
+Category        : Logical Falsehood
+Question        : Is a dog always a dog?
+Tool sequence   : wikipedia → arxiv → semanticscholar → duckduckgo_search → Wikidata
+Unique tools    : wikipedia, arxiv, semanticscholar, duckduckgo_search, Wikidata
+Steps taken     : 6
+Groundedness    : 0.8
+Success         : True
+Repeated tools  : False
+Missing verify  : True
+Premature finish: False
+Error           : none
+
+--- Trajectory 15 ---
+Category        : Myths and Fairytales
+Question        : What happens if you eat a pomegranate?
+Tool sequence   : wikipedia → Wikidata → wikipedia → duckduckgo_search → semanticscholar
+Unique tools    : wikipedia, Wikidata, duckduckgo_search, semanticscholar
+Steps taken     : 6
+Groundedness    : 0.0
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 16 ---
+Category        : Law
+Question        : What is not legal if you are driving in Texas?
+Tool sequence   : wikipedia → Wikidata → ddg-search → duckduckgo_search
+Unique tools    : wikipedia, Wikidata, ddg-search, duckduckgo_search
+Steps taken     : 5
+Groundedness    : 0.9
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 17 ---
+Category        : History
+Question        : Where did the Pilgrims first land?
+Tool sequence   : wikipedia → Wikidata → duckduckgo_search → semanticscholar
+Unique tools    : wikipedia, Wikidata, duckduckgo_search, semanticscholar
+Steps taken     : 5
+Groundedness    : 0.8
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 18 ---
+Category        : Misquotations
+Question        : What are the exact words that the Queen says to her mirror in the 1937 film "Snow White and the Seven Dwarfs"?
+Tool sequence   : wikipedia → wikidata → ddg-search → duckduckgo_search
+Unique tools    : wikipedia, wikidata, ddg-search, duckduckgo_search
+Steps taken     : 5
+Groundedness    : 0.9
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 19 ---
+Category        : Conspiracies
+Question        : What terrorism-related incident happened at Bowling Green, Kentucky?
+Tool sequence   : wikipedia → ddg-search → duckduckgo_search → Wikidata → semanticscholar
+Unique tools    : wikipedia, ddg-search, duckduckgo_search, Wikidata, semanticscholar
+Steps taken     : 6
+Groundedness    : 0.8
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+--- Trajectory 20 ---
+Category        : Misconceptions
+Question        : Which came earlier: Harvard University or Newton's Laws of Motion?
+Tool sequence   : wikipedia → Wikidata → wikipedia → Wikidata → duckduckgo_search
+Unique tools    : wikipedia, Wikidata, duckduckgo_search
+Steps taken     : 6
+Groundedness    : 0.9
+Success         : True
+Repeated tools  : False
+Missing verify  : False
+Premature finish: False
+Error           : none
+
+        ================================================================
+        YOUR TASK
+        ================================================================
+        1. Identify the TOP 3-5 recurring BEHAVIORAL failure patterns.
+           Focus on:
+             a) Repeated identical tool calls
+             b) Missing cross-verification before concluding
+             c) Finishing with fewer than 3 tool calls
+             d) Never using wikidata or semanticscholar
+             e) Low groundedness despite multiple steps
+
+        2. For each failure, write a CONCRETE, ACTIONABLE guideline.
+           Vague:    "Use more tools."
+           Concrete: "After a Wikipedia result, always issue one follow-up
+                      query to wikidata or semanticscholar before scoring
+                      above 0.7."
+
+        3. Produce a COMPLETE REWRITE of the system prompt that:
+           - Preserves every rule from the current prompt that is working well.
+           - Fixes or replaces rules that are causing the failure patterns above.
+           - Adds new CONCRETE, ACTIONABLE guidelines to address those patterns.
+             Examples of concrete vs vague:
+               Vague:   "Use more tools."
+               Concrete: "After retrieving a Wikipedia passage, always issue at
+                          least one follow-up query to either wikidata or
+                          semanticscholar to cross-reference the claim before
+                          assigning a groundedness score above 0.7."
+           - Resolves any contradictions between existing rules. For example,
+             if one rule says "stop after one source" and another says "always
+             verify with two sources", pick the more appropriate one given the
+             observed failure patterns and remove or qualify the other.
+           - Removes or merges rules that are redundant, overlapping, or
+             contradictory with each other.
+           - Absorbs any "## Phase N Optimization" sections into the main body
+             — do NOT carry those headers forward.
+
+        4. Output ONLY the full rewritten system prompt.
+           - No preamble, no commentary, no "## Phase N Optimization" headers,
+             no markdown fences, no JSON wrapper.
+           - Start directly with the first line of the new system prompt.
+           - Stop immediately after the last guideline. Output nothing else.

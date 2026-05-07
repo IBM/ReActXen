@@ -1,0 +1,30 @@
+{
+  "num_validation_questions": 5,
+  "winner": "V2_Semantic",
+  "rankings": [
+    {
+      "method_name": "V2_Semantic",
+      "success_rate": 1.0,
+      "avg_groundedness": 0.86,
+      "fault_rate": 0.0,
+      "avg_steps": 4.8,
+      "composite_score": 74.4
+    },
+    {
+      "method_name": "V1_Behavioral",
+      "success_rate": 1.0,
+      "avg_groundedness": 0.72,
+      "fault_rate": 0.0,
+      "avg_steps": 5.0,
+      "composite_score": 68.8
+    },
+    {
+      "method_name": "V2_Lexical",
+      "success_rate": 1.0,
+      "avg_groundedness": 0.65,
+      "fault_rate": 0.0,
+      "avg_steps": 5.2,
+      "composite_score": 66.0
+    }
+  ]
+}

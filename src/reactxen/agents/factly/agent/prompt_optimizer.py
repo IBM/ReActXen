@@ -65,6 +65,7 @@ import logging
 import math
 import os
 import random
+import re
 import shutil
 import sys
 import textwrap
@@ -235,7 +236,7 @@ def collect_trajectories(
             4. End with a Finish action containing a valid JSON object.
 
             IMPORTANT: Respond only with a single valid JSON object with exactly
-            two fields: "action" and "action_input".  The "action" must be one of:
+            two fields: "action" and "action_input". The "action" must be one of:
             arxiv, wikipedia, ddg-search, wikidata, semanticscholar, Finish.
 
             Final Output Format (for Finish only):
@@ -365,7 +366,7 @@ def collect_trajectories(
 
     with ThreadPoolExecutor(max_workers=n_threads) as executor:
         futures = [executor.submit(_process_batch, b) for b in batches]
-        done, not_done = wait(futures, timeout=1800)
+        _, not_done = wait(futures, timeout=1800)
         for f in not_done:
             f.cancel()
             logger.warning("A batch timed out and was cancelled.")
@@ -510,24 +511,30 @@ def build_meta_analysis(
              d) Finishing too early with insufficient evidence
              e) Low groundedness scores despite multiple tool calls
 
-        2. For each failure pattern, write a CONCRETE, ACTIONABLE guideline
-           (not vague advice) that directly prevents it. Examples of concrete
-           vs vague:
-             Vague:   "Use more tools."
-             Concrete: "After retrieving a Wikipedia passage, always issue at
-                        least one follow-up query to either wikidata or
-                        semanticscholar to cross-reference the claim before
-                        assigning a groundedness score above 0.7."
+        2. Produce a COMPLETE REWRITE of the system prompt that:
+           - Preserves every rule from the current prompt that is working well.
+           - Fixes or replaces rules that are causing the failure patterns above.
+           - Adds new CONCRETE, ACTIONABLE guidelines to address those patterns.
+             Examples of concrete vs vague:
+               Vague:   "Use more tools."
+               Concrete: "After retrieving a Wikipedia passage, always issue at
+                          least one follow-up query to either wikidata or
+                          semanticscholar to cross-reference the claim before
+                          assigning a groundedness score above 0.7."
+           - Resolves any contradictions between existing rules. For example,
+             if one rule says "stop after one source" and another says "always
+             verify with two sources", pick the more appropriate one given the
+             observed failure patterns and remove or qualify the other.
+           - Removes or merges rules that are redundant, overlapping, or
+             contradictory with each other.
+           - Absorbs any "## Optimization Loop N Additions" sections into the
+             main body — do NOT carry those headers forward.
 
-        3. Output the COMPLETE AUGMENTED SYSTEM PROMPT.
-           - Keep ALL existing instructions intact.
-           - Append a new section at the end:
-
-               ## Optimization Loop {loop_index} Additions
-
-           - List only the new guidelines in that section.
-           - Do NOT wrap in markdown fences or add any preamble.
-           - Output ONLY the prompt text — nothing else.
+        3. Output ONLY the full rewritten system prompt.
+           - No preamble, no commentary, no "## Optimization Loop" headers,
+             no markdown fences, no JSON wrapper.
+           - Start directly with the first line of the new system prompt.
+           - Stop immediately after the last guideline. Output nothing else.
     """).strip()
 
 
@@ -537,8 +544,8 @@ def build_meta_analysis(
 
 def call_optimizer_llm(meta_prompt: str) -> str:
     try:
-        from ibm_watsonx_ai.foundation_models import ModelInference  # type: ignore
-        from ibm_watsonx_ai import Credentials                        # type: ignore
+        from ibm_watsonx_ai.foundation_models import ModelInference
+        from ibm_watsonx_ai import Credentials
     except ImportError as exc:
         raise ImportError(
             "ibm_watsonx_ai is required. Install with: pip install ibm-watsonx-ai"
@@ -558,10 +565,11 @@ def call_optimizer_llm(meta_prompt: str) -> str:
         credentials=Credentials(api_key=api_key, url=url),
         project_id=project_id,
         params={
-            "decoding_method": "greedy",
-            "max_new_tokens":  4096,
-            "temperature":     0.2,
+            "decoding_method":    "greedy",
+            "max_new_tokens":     2048,
+            "temperature":        0.2,
             "repetition_penalty": 1.05,
+            "stop_sequences":     ["<|eom_id|>", "<|eot_id|>"],  # correctly placed here
         },
     )
 
@@ -634,15 +642,86 @@ def run_one_loop(
     # --- Step 4: Call optimizer LLM ------------------------------------------
     new_prompt = call_optimizer_llm(meta_prompt)
 
-    # --- Step 5: Persist new prompt ------------------------------------------
-    save_prompt(new_prompt, _LIVE_PROMPT_PATH)
+    # Strip stop tokens that WatsonX includes in the returned text
+    new_prompt = new_prompt.replace("<|eom_id|>", "").replace("<|eot_id|>", "").strip()
+
+    # Strip JSON wrapper if the LLM responded in ReAct format
+    try:
+        parsed = json.loads(new_prompt)
+        action_input = parsed.get("action_input", "")
+        if isinstance(action_input, dict):
+            action_input = action_input.get("text", "")
+        if isinstance(action_input, str) and action_input.strip():
+            new_prompt = action_input.strip()
+    except (json.JSONDecodeError, TypeError):
+        pass
+
+    # Strip trailing markdown code fence containing JSON (```json {...} ```)
+    new_prompt = re.sub(r'\n```(?:json)?\n[\s\S]*?```\s*$', '', new_prompt).strip()
+
+    # Strip trailing bare code fence markers (``` alone, possibly repeated)
+    new_prompt = re.sub(r'(\n```)+\s*$', '', new_prompt).strip()
+
+    # Strip trailing bare JSON block starting on its own line
+    idx = new_prompt.rfind('\n{')
+    if idx != -1:
+        try:
+            json.loads(new_prompt[idx:].strip())
+            new_prompt = new_prompt[:idx].strip()
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    # Strip trailing "The final answer is: ..." lines (LLM math-style artifact)
+    new_prompt = re.sub(r'(\n+The final answer is:.*)+\s*$', '', new_prompt, flags=re.IGNORECASE).strip()
+
+    # Strip trailing JSON blob artifact (e.g. {"action": ...} appended by model)
+    tail_marker = '{"action":'
+    tail_idx = new_prompt.find(tail_marker)
+    if tail_idx > 0:
+        new_prompt = new_prompt[:tail_idx].strip()
+
+    # Strip duplicate prompt — LLM sometimes reproduces the current prompt then
+    # adds a second copy; truncate at the second IMPORTANT: if present.
+    first_idx = new_prompt.find("IMPORTANT:")
+    second_idx = new_prompt.find("IMPORTANT:", first_idx + 1)
+    if second_idx > 0:
+        new_prompt = new_prompt[:second_idx].strip()
+
+    # Warn if the LLM returned only an additions section instead of a full rewrite
+    loop_marker = f"## Optimization Loop {loop_index} Additions"
+    if loop_marker in new_prompt:
+        logger.warning(
+            "LLM returned an additions section instead of a full rewrite for loop %d "
+            "– stripping the header and appending to keep the run going.", loop_index
+        )
+        new_prompt = new_prompt[new_prompt.rfind(loop_marker):].strip()
+        new_prompt = new_prompt[len(loop_marker):].strip()
+
+    # Strip trailing leaked meta-commentary ("Note:", "## Step N:", stray "}$", etc.)
+    leak_match = re.search(
+        r'\n+(?:Note:|}\$|## Step \d|The following|The above)',
+        new_prompt,
+        flags=re.IGNORECASE,
+    )
+    if leak_match:
+        logger.warning("Stripping leaked LLM meta-commentary from loop %d output.", loop_index)
+        new_prompt = new_prompt[:leak_match.start()].strip()
+
+    # --- Step 5: Persist: replace the prompt with the full rewrite -----------
+    if new_prompt:
+        final_prompt = new_prompt
+    else:
+        logger.warning("No rewrite produced for loop %d – keeping existing prompt.", loop_index)
+        final_prompt = current_prompt
+
+    save_prompt(final_prompt, _LIVE_PROMPT_PATH)
 
     # Also save a versioned copy alongside the loop's trajectories
     loop_prompt_path = loop_dir / "optimized_prompt.txt"
-    save_prompt(new_prompt, loop_prompt_path)
+    save_prompt(final_prompt, loop_prompt_path)
 
-    logger.info("LOOP %d  COMPLETE.  New prompt: %d chars.", loop_index, len(new_prompt))
-    return new_prompt
+    logger.info("LOOP %d  COMPLETE.  New prompt: %d chars.", loop_index, len(final_prompt))
+    return final_prompt
 
 
 def _load_trajectories_from_dir(directory: Path) -> list[dict[str, Any]]:

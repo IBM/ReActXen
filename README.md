@@ -204,3 +204,106 @@ For more information, see `docs/prompt_optimizer_benchmark.md` at the root of th
 ```bash
 python benchmark_prompt_optimizers.py --n 5 --methods v1,v2_lexical,v2_semantic
 ```
+
+---
+
+# Project Source Code
+
+Please find the codes that we created and modified in this directory:
+
+```
+src/reactxen/agents/factly/agent/
+```
+
+Below is a summary of every file we created or modified for this project.
+
+## Core Agent Code
+
+| File | Status | Description |
+|---|---|---|
+| `truthful_mcqa_checker.py` | Modified | Main Factly agent — runs TruthfulQA fact-checking with ReActXen. Contains `PROMPT_OG` (baseline prompt) and the full agent execution pipeline. |
+| `truthful_mcqa_checker_demo.py` | Created | Interactive Streamlit demo for side-by-side prompt comparison and credit assignment benchmark visualization. |
+
+## Credit Assignment (RQ1)
+
+| File | Status | Description |
+|---|---|---|
+| `credit_assignment.py` | Created | Assigns per-step credit to agent trajectories using either lexical (ROUGE-L / Jaccard) or semantic (embedding cosine similarity) scoring. |
+| `benchmark_credit_assignment.py` | Created | Benchmarks lexical vs semantic credit assignment — computes concentration metrics, ablation degradation, and generates comparison outputs. |
+| `evaluation/__init__.py` | Created | Package init for the evaluation sub-module. |
+| `evaluation/credit_metrics.py` | Created | Mathematical metric functions: entropy, Gini coefficient, Top-K mass, effective number of steps, correlation, cosine similarity, and Jensen-Shannon divergence. |
+| `evaluation/ablation.py` | Created | Ablation evaluation — removes Top-k credited steps and measures degradation in similarity to the final answer; computes AUC via the trapezoidal rule. |
+| `evaluation/plotting.py` | Created | Visualization utilities for credit distributions, tool credit bar charts, and ablation curves. |
+
+## Prompt Optimization (RQ2 & RQ3)
+
+| File | Status | Description |
+|---|---|---|
+| `prompt_optimizer.py` | Created | V1 (Behavioral) prompt optimizer — iteratively refines the system prompt by analyzing agent trajectories and extracting behavioral rules. |
+| `prompt_optimizer_v2.py` | Created | V2 (Lexical) prompt optimizer — uses ROUGE-L / Jaccard credit assignment to guide prompt refinement. |
+| `prompt_optimizer_v2_semantic.py` | Created | V2 (Semantic) prompt optimizer — uses embedding-based credit assignment to guide prompt refinement. |
+| `benchmark_prompt_optimizers.py` | Created | Benchmarks optimized prompts on unseen TruthfulQA questions — computes success rate, groundedness, fault rate, and composite score. |
+
+---
+
+# Pre-Computed Results
+
+All experiment outputs are committed to the repository so results can be inspected without re-running the scripts.
+
+## Credit Assignment Results (RQ1)
+
+| File / Folder | Description |
+|---|---|
+| `src/reactxen/agents/factly/agent/credit_assigned_steps.csv` | Per-step credit scores (lexical & semantic) for every trajectory |
+| `src/reactxen/agents/factly/agent/tool_credit_summary_with_filenames.csv` | Aggregated credit per tool type |
+| `src/reactxen/agents/factly/agent/credit_assignment_results/` | Per-trajectory credit distribution plots |
+| `src/reactxen/agents/factly/traj_store/` | Raw trajectory JSON files used as input |
+
+## Credit Assignment Benchmark Results (RQ1)
+
+All outputs from `benchmark_credit_assignment.py` are stored in:
+
+```
+src/reactxen/agents/factly/agent/benchmark_outputs/
+```
+
+| File | Description |
+|---|---|
+| `benchmark_summary.json` | Lexical vs Semantic summary metrics (entropy, Gini, Top-K mass, ablation AUC) |
+| `per_step_credit_comparison.csv` | Side-by-side lexical and semantic credit for every step |
+| `per_tool_credit_comparison.csv` | Per-tool credit distribution comparison |
+| `ablation_results.csv` | Degradation values at each Top-k removal level |
+| `ablation_curves.png` | Ablation degradation curves (lexical vs semantic) |
+| `credit_distribution_plots.png` | Histogram of credit score distributions |
+| `tool_credit_distribution_plots.png` | Bar chart of credit allocated to each tool |
+| `human_eval_sample.csv` | Sampled steps for optional human evaluation |
+
+## Prompt Optimizer Benchmark Results (RQ2 & RQ3)
+
+| File | Description |
+|---|---|
+| `benchmark_outputs/prompt_benchmark_summary.json` | Rankings for V1, V2_Lexical, V2_Semantic (n=5) |
+| `benchmark_outputs/prompt_benchmark_summary_n=5_baseline_v1.json` | Baseline vs V1 comparison (n=5) |
+| `benchmark_outputs/prompt benchmark results (n5)/prompt_benchmark_summary.json` | Earlier benchmark run with 3 optimizers |
+
+## Optimized Prompts
+
+The final system prompts produced by each optimizer are stored under `genai-proj-results/`:
+
+| Folder | Optimizer | Contents |
+|---|---|---|
+| `genai-proj-results/prompt_optimizer_v1/` | V1 (Behavioral) | `system_prompt.txt`, per-loop trajectories |
+| `genai-proj-results/prompt_optimizer_v2_default/` | V2 (Lexical) | `system_prompt.txt`, per-loop trajectories |
+| `genai-proj-results/prompt_optimizer_v2_semantic/` | V2 (Semantic) | `system_prompt.txt`, per-loop trajectories |
+
+Each folder contains loop subdirectories (`loop_1/`, `loop_2/`, …) with the trajectory outputs and meta-analysis prompts from that optimization iteration, as well as intermediate `system_prompt_loop_*.txt` snapshots.
+
+## Documentation
+
+| File | Description |
+|---|---|
+| `docs/credit_assignment_algorithms.md` | Detailed explanation of the credit assignment algorithms |
+| `docs/prompt_optimizer_benchmark.md` | Methodology and metrics for the prompt optimizer benchmark |
+| `docs/workflow_explanation.md` | End-to-end workflow and evaluation methodology |
+
+

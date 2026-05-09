@@ -166,7 +166,7 @@ The question asks the agent to find the value of \(r\) that satisfies the logari
 
 ## Running Research Question 1
 
-For more information, see `docs/credit_assignment_algorithms.md` at the root of the project.
+For more information, see `docs/credit_assignment_algorithms.md` and `docs/prompt_optimizer_benchmark.md` at the root of the project.
 
 ### Running `credit_assignment.py`
 

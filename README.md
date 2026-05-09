@@ -152,3 +152,55 @@ The question asks the agent to find the value of \(r\) that satisfies the logari
   ```
 
   You can view the sample exported trajectory here: [Trajectory](./src/reactxen/resources/sample_traj_math_problem.json)
+
+  ---
+
+  # Running Experiments
+
+> **Before running anything**, navigate to the following directory:
+> ```
+> src/reactxen/agents/factly/agent
+> ```
+
+---
+
+## Running Research Question 1
+
+For more information, see `docs/credit_assignment_algorithms.md` at the root of the project.
+
+### Running `credit_assignment.py`
+
+```bash
+python credit_assignment.py semantic
+python credit_assignment.py lexical
+```
+
+Results will be saved in the `credit_assignment_results` folder.
+
+---
+
+### Running `benchmark_credit_assignment.py`
+
+```bash
+python benchmark_credit_assignment.py --traj_dir ../traj_store --csv_dir . --output_dir benchmark_outputs
+```
+
+---
+
+## Running Research Question 2
+
+For more information, see `docs/prompt_optimizer_benchmark.md` at the root of the project.
+
+```bash
+python benchmark_prompt_optimizers.py --n 5 --methods baseline,v1
+```
+
+---
+
+## Running Research Question 3
+
+For more information, see `docs/prompt_optimizer_benchmark.md` at the root of the project.
+
+```bash
+python benchmark_prompt_optimizers.py --n 5 --methods v1,v2_lexical,v2_semantic
+```

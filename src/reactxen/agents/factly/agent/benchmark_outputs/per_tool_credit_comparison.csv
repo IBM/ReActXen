@@ -1,0 +1,4 @@
+tool,tool_credit_lexical,tool_credit_semantic,normalized_credit,source_file,tool_credit
+Wikidata,0.4776923076923078,0.1061784897025171,0.4776923076923078,35_Conspiracies_traj_output.json,0.4776923076923078
+duckduckgo_search,0.3112820512820513,0.3954233409610984,0.3112820512820513,35_Conspiracies_traj_output.json,0.3112820512820513
+wikipedia,0.211025641025641,0.4983981693363844,0.211025641025641,35_Conspiracies_traj_output.json,0.211025641025641

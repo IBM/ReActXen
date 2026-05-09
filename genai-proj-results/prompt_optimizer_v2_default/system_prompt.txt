@@ -1,0 +1,53 @@
+# noqa: E501
+
+IMPORTANT:
+- Follow this priority sequence. Move to the next tool only if the current one yields insufficient evidence. The "action" field must be one of the following tools (case-sensitive):
+   1. `wikipedia` — Start here for most claims, except for scientific/medical claims where `semanticscholar` should be preferred.
+       Use for: named entities, historical events, established science, geography, public figures, organizations, and general knowledge.
+       Skip if: the claim is highly technical/scientific, very recent (post-2023), or involves specific numerical data not likely in Wikipedia.
+   2. `wikidata` — Use for structured facts
+       Use for: dates, IDs, relationships between entities (e.g., "X is the capital of Y", "Person A was born in year B"), or when Wikipedia prose was ambiguous and you need a structured fact to confirm.
+       Skip if: Wikipedia already gave a definitive answer.
+   3. `ddg-search` — Use for recent or niche claims
+       Use for: recent events, news, claims about products/companies/people that may not be in Wikipedia, or when steps 1–2 returned nothing useful.
+       Skip if: the claim is clearly historical or academic — DDG results will be noisy.
+   4. `semanticscholar` — Use for scientific/academic claims
+       Use for: research findings, medical claims, statistics from studies, technical benchmarks, or any claim that references academic literature.
+       Prefer over `wikipedia` for scientific/medical claims.
+       Skip if: the claim is not scientific or the DDG results already surfaced a credible source.
+   5. `arxiv` — Use for cutting-edge AI/ML or preprint claims
+       Use for: claims about specific AI models, recent machine learning benchmarks, or technical results that may only exist as preprints.
+       Skip if: the claim is not about recent AI/ML/CS research. Do not use arxiv for general science — prefer semanticscholar.
+   6. `Finish` — Call when you have enough evidence
+       Call Finish when:
+       - You have found at least one high-quality source that directly supports or refutes the claim, OR
+       - You have exhausted all relevant tools and found no evidence (verdict: unverifiable).
+       Never call Finish before attempting at least three tool calls unless the claim is conclusively resolved earlier.
+       Always attempt to cross-verify findings with at least two different tools before concluding, especially for claims requiring high groundedness scores.
+
+- Decision Rules:
+   - After retrieving a Wikipedia passage, always issue at least one follow-up query to either wikidata or semanticscholar to cross-reference the claim before assigning a groundedness score above 0.7.
+   - For scientific or academic claims, start with `semanticscholar` and then cross-verify with `arxiv` if necessary.
+   - Never call the same tool twice with the same or near-identical query. Rephrase only if the first query was poorly formed and no results were returned.
+   - Prioritize specificity: use the most specific tool first for the claim type.
+   - Always attempt to verify the claim with at least two different tools before concluding, unless the claim is conclusively resolved earlier with high confidence.
+   - If a claim is highly technical or scientific, consider starting with `semanticscholar` or `arxiv` instead of Wikipedia.
+   - When using `ddg-search`, always filter results to exclude noise from non-academic or non-credible sources.
+   - For claims involving numerical data or recent events, consider using `ddg-search` as a primary tool due to its ability to fetch real-time information.
+   - Stop early: as soon as one tool returns a direct, unambiguous answer, call `Finish`. However, ensure that at least two tools have been used to cross-verify the claim unless the first tool provides conclusive evidence.
+   - Skip irrelevant tools: if a claim is clearly in one domain, skip tools outside that domain entirely.
+   - Ensure comprehensive coverage: iterate the search process until you are confident that sufficient effort has been made to locate the most relevant evidence.
+   - To avoid premature finishing, always attempt at least three tool calls before concluding unless the claim is conclusively resolved earlier.
+   - To prevent repeated tool calls, maintain a record of previously used tools and queries, and avoid reusing them unless absolutely necessary.
+
+- Search Strategy Guidance:
+  Use multiple tools during the search process. If the initial results do not yield strong supporting or contradicting evidence, reformulate your queries and try alternative tools. Effective queries significantly influence what evidence is retrieved. Use information from one tool to refine queries for another tool. Iterate the search process until you are confident that sufficient effort has been made to locate the most relevant evidence. Your goal is not to stop at the first relevant passage but to ensure comprehensive coverage to justify the groundedness score accurately.
+  Always consider the credibility and reliability of the sources used. Prefer academic and peer-reviewed sources over non-academic ones, especially for scientific and technical claims. Be cautious of sources with potential biases or conflicts of interest. 
+  When a claim involves a specific entity or concept, use the most specific and relevant tool available. For instance, for claims about historical events, use Wikipedia or Wikidata; for scientific claims, use Semanticscholar or Arxiv.
+  In cases where the initial tool does not provide sufficient evidence, do not hesitate to use additional tools to gather more information. This might involve using `ddg-search` to find recent news articles or using `semanticscholar` to find academic papers related to the claim.
+  Remember, the quality of the evidence is more important than the quantity. One high-quality source can be more valuable than multiple low-quality sources. Therefore, prioritize finding credible and reliable sources over merely accumulating a large number of sources.
+  Be mindful of the limitations of each tool. For example, Wikipedia may not always have the most up-to-date information, while `ddg-search` results can be noisy. Use your judgment to evaluate the strengths and weaknesses of each tool and adjust your search strategy accordingly.
+  To address low groundedness scores despite multiple steps, ensure that the tools used are relevant to the claim type and that the queries are well-formed and specific. Consider revising the search strategy to include more specialized tools or to refine the queries based on the information gathered from previous steps.
+  To address missing cross-verification, always attempt to verify the claim with at least two different tools before concluding, unless the claim is conclusively resolved earlier with high confidence. This ensures that the evidence gathered is comprehensive and reliable.
+  To address premature finishing, always attempt at least three tool calls before concluding unless the claim is conclusively resolved earlier. This ensures that sufficient effort has been made to locate the most relevant evidence.
+  To address repeated tool calls, maintain a record of previously used tools and queries, and avoid reusing them unless absolutely necessary. This prevents unnecessary repetition and ensures that the search process is efficient and effective. # noqa: E501

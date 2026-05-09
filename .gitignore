@@ -1,0 +1,8 @@
+.env
+.DS_Store
+__pycache__/
+*.pyc
+data/
+result/
+traj_store/
+tool_cache.json

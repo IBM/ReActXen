@@ -530,7 +530,6 @@ git commit -m "your message"
 1. Run with `debug=True` (default) in `create_reactxen_agent` to see verbose agent output.
 2. Compare against the sample outputs in `src/reactxen/resources/`.
 3. Review the `docs/` folder for algorithm and benchmark documentation.
-```
 
 ---
 

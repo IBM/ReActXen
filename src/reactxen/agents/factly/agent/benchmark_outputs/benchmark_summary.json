@@ -1,0 +1,38 @@
+{
+  "num_files": 1,
+  "num_steps": 4,
+  "final_quality_labels_available": false,
+  "lexical": {
+    "mean_entropy": 1.7171457819438467,
+    "mean_gini": 0.33435897435897455,
+    "mean_top1_mass": 0.4776923076923078,
+    "mean_top3_mass": 0.902051282051282,
+    "mean_effective_num_steps": 3.287852964489469,
+    "ablation_auc": 0.3351875841617584,
+    "ablation_degradation_at_1": 0.0,
+    "ablation_degradation_at_3": 0.0,
+    "ablation_degradation_at_5": 0.3351875841617584
+  },
+  "semantic": {
+    "mean_entropy": 1.8173034219925253,
+    "mean_gini": 0.2648741418764302,
+    "mean_top1_mass": 0.3954233409610984,
+    "mean_top3_mass": 0.8938215102974827,
+    "mean_effective_num_steps": 3.524218618480833,
+    "ablation_auc": 0.542253851890564,
+    "ablation_degradation_at_1": 0.0,
+    "ablation_degradation_at_3": 0.10353313386440277,
+    "ablation_degradation_at_5": 0.3351875841617584
+  },
+  "tool_distribution_comparison": {
+    "cosine_sim": 0.7114386758827391,
+    "js_divergence": 0.31046224812358136,
+    "rank_correlation": -1.0
+  },
+  "winner_by_metric": {
+    "ablation_auc": "semantic",
+    "ablation_at_1": "tie",
+    "ablation_at_3": "semantic",
+    "ablation_at_5": "tie"
+  }
+}

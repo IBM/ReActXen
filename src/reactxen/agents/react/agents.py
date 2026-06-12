@@ -71,13 +71,14 @@ def handler(signum, frame):
 # --- Cross-platform fix for signal.SIGALRM ---
 # On Linux/macOS: use SIGALRM as before.
 # On Windows: SIGALRM is not available, so fall back to threading.Timer
-if hasattr(signal, "SIGALRM"):
-    signal.signal(signal.SIGALRM, handler)
-else:
-    # Emulate timeout behavior with threading.Timer on Windows
-    _timeout_timer = threading.Timer(5, handler, args=(None, None))
-    _timeout_timer.daemon = True
-    _timeout_timer.start()
+if threading.current_thread() is threading.main_thread():
+    if hasattr(signal, "SIGALRM"):
+        signal.signal(signal.SIGALRM, handler)
+    else:
+        # Emulate timeout behavior with threading.Timer on Windows
+        _timeout_timer = threading.Timer(5, handler, args=(None, None))
+        _timeout_timer.daemon = True
+        _timeout_timer.start()
 # --- End of cross-platform fix ---
 
 
